@@ -1,0 +1,65 @@
+howto use
+
+ruby vrserver.rb
+
+at another server
+
+ruby sample.rb
+
+-------
+
+
+canvas.rb
+
+文字のサイズの持ち方。PSはどうするか？
+Ghostviewへのパイプによるインターフェースは
+Visualurubyによるグラフオブジェクトのプロパティーチェックをつける
+
+---------------------------
+
+graph.rb
+
+modify label ring buffer style  
+modify y+err array style
+xaxis.minterval should determin interval of minor ticks not exactly specified
+
+classの初期化を工夫する
+せっかくAxisstyleなどという構造体を作っているのに、
+属性を変更するのに、いちいちメンバーを指定していて無駄な二重化をしている
+
+どの座標系を使うかを統一する。関数名ですぐわかるようにネーミングを工夫する
+
+属性の名前に統一感が無い。
+
+graph - plot interface いまいち
+同じgraphの属性でdataだけかえるというのがやりたかったのにどうやればいいんだ。
+
+graph.saveでセーブして
+graph.replace_dataとかいうメソッドでどうだ！
+
+複数のグラフがある場合には？
+
+
+automated min max determination should be modified margin both side
+  "to make margin or not " should be also controlledXk
+
+graph.add wo loop de mawasu tokino dummy data no
+tukurikata
+
+[0,0] wo sitei saretatokino error no kaihi
+
+-------------------------------
+
+array narrayに対応する。
+
+
+-------------------------------
+
+vrcanvas
+
+
+-------------------------------
+
+ruby/dlをつかってretrieveのデータをアクセス
+
+

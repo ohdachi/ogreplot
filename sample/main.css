@@ -1,0 +1,108 @@
+/* 基本設定スタイルシート（ディレクトリ表示） */
+body                 {
+                      margin: 0 50px 25px;
+                      padding: 0;
+                      color: #000000;
+                      background-color: #ffffff;
+                     }
+a:link               {
+                      color: #0000ff;
+                      background-color: transparent;
+                     }
+a:visited            {
+                      color: #660099;
+                      background-color: transparent;
+                     }
+a:hover              {
+                      color: #bc0000;
+                      background-color: #f0f0f6;
+                     }
+a:active             {
+                      color: #a00033;
+                      background-color: #f0f0f6;
+                     }
+img                  {
+                      border-width: 0;
+                     }
+h1                   {
+                      text-align: center;
+                      margin: 25px 0 25px;
+                      border-style: solid;
+/*                      border-width: 1px 1px 1px 5px; */
+                      border-width: 1px 40px 1px 40px;
+                      border-color: #8686c0;
+                      font-size: 1.9em;
+                      color: #30306a;
+                      background-color: #ffffff;
+                      padding: 8px 5px 5px 15px;
+                     }
+h2                   {
+                      margin: 35px 0 15px;
+                      border-style: solid;
+                      border-width: 1px 1px 1px 10px;
+                      border-color: #9090cc;
+                      font-size: 1.5em;
+                      color: #20206a;
+                      background-color: #f6f6f6;
+                      padding: 4px 3px 1px 17px;
+                     }
+h2 a:link            {
+                      color: #0000e0;
+                      background-color: #f6f6f6;
+                     }
+h2 a:visited         {
+                      color: #3a00b0;
+                      background-color: #f6f6f6;
+                     }
+h2 a:hover           {
+                      color: #990000;
+                      background-color: #ececec;
+                     }
+h2 a:active          {
+                      color: #990033;
+                      background-color: #f6f6f6;
+                     }
+h3                   {
+                      text-align: right;
+                      margin: 25px 0px 0px 0px;
+                      font-size: 1.3em;
+                      color: #000066;
+                      background-color: #ffffff;
+/*                      border-left: solid 3px #776af0; */
+                      border-bottom: dotted 3px #776af0;
+                      padding: 2px 3px 0px 17px;
+                     }
+h3 a:link            {
+                      color: #0000dd;
+                      background-color: #ffffff;
+                     }
+h3 a:visited         {
+                      color: #600088;
+                      background-color: #ffffff;
+                     }
+h4                   {
+                      margin: 15px 0 0 40px;
+                      font-size: 1.1em;
+                      color: #3f3060;
+                      background-color: #ffffff;
+                      border-left: solid 5px #bfb6d3;
+                      padding: 3px 3px 1px 17px;
+                     }
+h4 a:link            {
+                      color: #332066;
+                      background-color: #ffffff;
+                     }
+h4 a:visited         {
+                      color: #532063;
+                      background-color: #ffffff;
+                     }
+h5                   {
+                      margin: 20px 0 0 30px;
+                      font-size: 1em;
+                      color: #202a6a;
+                      background-color: #ffffff
+                     }
+p                    {
+/*                      margin: 18px 0 0 6px; */
+                      margin: 18px 6px 0px 45px;
+                     }
