@@ -3,6 +3,8 @@ require 'canvas.rb'
 require 'vrcanvas.rb'
 require 'drb/drb'
 
+#sample for vrcanvas
+
 data = []
 (0 .. 100).each{|i|
   data[i] = [i.to_f/10.0, sin(i.to_f/10.0) + 0.2]
