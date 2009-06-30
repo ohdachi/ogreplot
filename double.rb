@@ -33,7 +33,7 @@ test.data.each{|r|
 }
 
 
-p nbi_exist
+#p nbi_exist
 
 xrange = [1.0, 6.0]
 
