@@ -32,7 +32,7 @@ attr_accessor :style, :font, :xwidth, :ywidth, :pos1, :pos2
   def initialize(filename='ogre.canvas', defaultstyle=Std_style, defaultfont=Std_font)
 #    before_hook
 
-    if filename.kind_of(IO) then
+    if filename.kind_of?(IO) then
       @fp = filename
     else
       @fp=File.new(filename, mode="w")
