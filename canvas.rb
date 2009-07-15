@@ -287,18 +287,54 @@ end
 class PSCanvas < Canvas
 
   attr_accessor :style, :font, :xwidth, :ywidth
+  attr_accessor :Orientation
 
-  def initialize(filename='ogre.ps', defaultstyle=Std_style, defaultfont=Std_font, pos1=[72, 72], pos2=[72*6.5, 72*10] )
+#  def initialize(filename='ogre.ps', defaultstyle=Std_style, defaultfont=Std_font, pos1=[72, 72], pos2=[72*6.5, 72*10], options = {} )
+  def initialize(filename='ogre.ps', options = {} )
 
+    defaultstyle=Std_style
+    defaultfont=Std_font
+    pos1=[72, 72]
+    pos2=[72*6.5, 72*10]
+    @yinch = 210.0 / 25.4 * 72.0
+    @papsesize = 'A4'
     @header_p = false
 #    @fp=File.new(filename, mode="w")
 
+    @orientation = 'Portrait'
+#    paper = { 'A4' => [ [72, 72], [72*7.07, 72*10] ], 'B4' => [ [72, 72], [72*9.0, 72*12.72] ], 'A3' => [ [72, 72], [72 * 10.0, 72 * 14.14] ] }
+
+    if options.kind_of?(Hash) then
+      options.each{|key, value|
+        case key.to_s
+        when 'size'
+          if Papers[value] != nil then
+            pos1 = [144, 144]
+            pos2 = [Papers[value][0] / 25.4 * 72.0 - 72, Papers[value][1] / 25.4 * 72.0 - 72]
+            @papersize = value
+            @yinch = Papers[value][0] / 25.4 * 72.0 
+          end
+        when 'orientation'
+          @orientation = 'Landscape' if value.upcase == 'LANDSCAPE'
+          @orientation = 'Portrait' if value.upcase == 'PORTRAIT'
+        when 'defaultstyle'
+          defaultstyle = value
+        when 'defaultfont'
+          defaultfont = value
+        else
+          raise "Option #{key} => #{value} is not supported\n"
+        end
+      }
+    end
+    if @orientation == 'Landscape' then
+      pos2[0], pos2[1] = pos2[1], pos2[0]
+    end
+    
     @pos1_whole, @pos2_whole = pos1.collect{|i| i.to_f}, pos2.collect{|i| i.to_f}
 #    setwhole()
     super(filename, defaultstyle, defaultfont)
 #    set_style(@style)
 #    set_font(@font)
-
   end
 
 #
@@ -336,6 +372,8 @@ class PSCanvas < Canvas
 %%Creator: ogre (programed by S. Ohdachi)
 %%Title: ogre.ps [#{Dir.pwd}/#{$PROGRAM_NAME}] @ #{ENV['HOSTNAME']}#{ENV['COMPUTERNAME']}
 %%BoundingBOX #{@pos1[0].to_i} #{@pos1[1].to_i} #{@pos2[0].to_i} #{@pos2[1].to_i}
+%%Orientation: #{@orientation}
+%%DocumentPaperSizes: #{@papersize}
 %%Pages: 0
 %%
 
@@ -351,6 +389,12 @@ class PSCanvas < Canvas
   dup stringwidth pop -2 div 0 R show } def
 
 EOFHEADER
+    if @orientation == 'Landscape' then
+          @fp.print <<LANDSCAPE
+90 rotate
+0 #{-@yinch} translate
+LANDSCAPE
+    end
       @header_p = true
     end
   end

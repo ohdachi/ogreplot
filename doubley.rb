@@ -17,7 +17,7 @@ def doubley(data1, x1, y1, data2, x2, y2, options = {}, &proc)
   options1 = {}
   options2 = {}
 
-  options1['block'] = 0
+#  options1['block'] = 0
   options.each{|key, value|
 
     case key.to_s
