@@ -302,7 +302,11 @@ class PSCanvas < Canvas
 #    @fp=File.new(filename, mode="w")
 
     @orientation = 'Portrait'
-#    paper = { 'A4' => [ [72, 72], [72*7.07, 72*10] ], 'B4' => [ [72, 72], [72*9.0, 72*12.72] ], 'A3' => [ [72, 72], [72 * 10.0, 72 * 14.14] ] }
+
+#
+#   option :orientation => 'Landscape', :size => 'A4' e.g. can be passed
+#   style and font are also given by this Hash-style options.
+#
 
     if options.kind_of?(Hash) then
       options.each{|key, value|

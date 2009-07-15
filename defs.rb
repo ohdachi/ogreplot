@@ -239,7 +239,11 @@ Std_axisstyle = [
   255.upto(0){|i| cp.push(Style.new([i, i, i], 1.0, [0], [i, i, i]) ) }
   Color_pallet.push(cp)
 
-sizes = %w(A0 841x1189 B0 1030x1456 A1 594x841 B1 728x1030 A2 420x594 B2 515x728 A3 297x420 B3 364x515 A4 210x297 B4 257x364 A5 148x210  B5 182x257)
+#
+# page size definition for PS driver
+#
+
+  sizes = %w(A0 841x1189 B0 1030x1456 A1 594x841 B1 728x1030 A2 420x594 B2 515x728 A3 297x420 B3 364x515 A4 210x297 B4 257x364 A5 148x210 B5 182x257)
 Papers = {}
 (0 .. sizes.size/2 - 1).each{|i|
     Papers[sizes[i*2]] = [ sizes[i*2 + 1].split('x')[0].to_f, sizes[i*2 + 1].split('x')[1].to_f ]
