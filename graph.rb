@@ -4,15 +4,18 @@
 === Programed by Satoshi Ohdachi ( Ohdachi@nifs.ac.jp )
 ===    ver 0.01 Dec. 2000
 ===    ver 0.1 Aug. 2007
+===    ver 1.0 Jun. 2009 registered to Google Code
 =end
 
 =begin
 = class Graph
 == class method
---- Graph::new( array, column1, column2, xaxis, yaxis, graphtype, symboltype, xrange, yrange )
+--- Graph::new( array, column1, column2, options )
+: options
+:xrange => [0.0, 1.0], :yrange, :gtype => Ogre::Scatter, :symtype, :label(for legend)
 
 == usage
-: Simple plot	
+: Simple plot from filename
 g1 = Graph.new('filename', c1, c2 :gtype => Ogre::Scatter, :symtype => 4)
        * plot data[*][c1], data[*][c2] with symbol=4
 
@@ -39,7 +42,8 @@ p  g6 = Graph.new(data, 0, 1) { |d|
 
 == instance method
 --- Graph#plot(dev)
-Plot grpahs on device ((|dev|)).
+Plot graphs on device ((|dev|)).
+
 
 =end
 module Ogre
@@ -236,8 +240,6 @@ class Graph
 #
 #   bar plot
 #
-
-
     if ( gtype & Ogre::Bar !=0 ) then
       
       if c1.kind_of?(Array) then
@@ -250,11 +252,9 @@ class Graph
         end
       else
         if @barwidth == nil then
-#          txarr = data.collect{|d| d[c1[0]] }.sort
           txarr = data.collect{|d| d[c1]}.sort
           @barwidth = (0 ... txarr.size - 1).collect{ |i| txarr[i + 1] - txarr[i] }.select{|x| x > 0 }.min
         end
-#        dc = c1[0]
         dc = c1
         xedata = data.collect{|d| [ d[dc] + @barwidth * 0.5, d[dc] - @barwidth * 0.5] }
       end
@@ -737,7 +737,7 @@ class Graph
 	dev.multiline( templine, @symbol.pstyle.style ) if templine.size != 0
 
 	p = Proc.new{ |dev, x, y, dx, dy|
-          dev.line([x - dx/4.0, y], [x + dx / 4.0, y], @symbol.pstyle.style)
+          dev.line([x - dx / 4.0, y], [x + dx / 4.0, y], @symbol.pstyle.style)
 	}
         legend.add( p, @label) if @label != ''
 	
@@ -842,11 +842,9 @@ class Graph
 
     def frac( x )
       if !@logscale 
-#        (x - @min) / @vwidth
          (x - @min) / (@max - @min)
       else
         if x > 0 then 
-#          (log10(x) - @logmin) / @logwidth
           (log10(x) - log10(@min)) / (log10(@max) - log10(@min))
         else
           0.0
@@ -861,7 +859,6 @@ class Graph
       elsif r.class == Array && r.size == 2 
 	@range = r
 	@min,@max = r.min, r.max
-#	@min,@max = r[0], r[1]
 	@range_specify = true
 	@tick = nil unless tick_specify
       else
@@ -1101,20 +1098,6 @@ class Graph
       @maxlen = 0
     end
 
-=begin
-    def set_position( pos )
-      if pos.kind_of?(Struct::Legendstyle) then
-	@style = pos
-      else
-	if Legend_shortcut[ pos ] != nil then
-	  @style = Ogre::Std_legendstyle[ Legend_shortcut[pos] ]
-	else
-	  raise "Legend.set_posision: #{pos} can not be understood"
-	end
-      end
-    end
-=end
-    
     def add( prc, text )
 
       @draws.push( prc )
@@ -1222,8 +1205,8 @@ class Graph
       astyle.rpos.each{|rp|
 	vect.push( [v2[0] + uv1[0] * rp[0] + uv2[0] * rp[1], v2[1] + uv1[1] * rp[0] + uv2[1] * rp[1] ] )
       }
-      puts "arrow vect\n"
-#      p vect
+      puts "arrow vect\n" if $debug
+
       dev.multiline(vect, astyle.style)
 	
     end
