@@ -285,9 +285,16 @@ attr_accessor :style, :font, :xwidth, :ywidth, :pos1, :pos2
 end
 
 class PSCanvas < Canvas
-
+=begin
+==Class PSCanvas
+--- PSCanvas.new(filename='ogre.ps', options)
+      *filename 
+        name of the file where actions are recorded.
+      *options
+      :size => 'A4', :orientation => 'Landscape', :defaultstyle => style, :defaultfont => font
+=end
   attr_accessor :style, :font, :xwidth, :ywidth
-  attr_accessor :Orientation
+  attr_accessor :orientation
 
 #  def initialize(filename='ogre.ps', defaultstyle=Std_style, defaultfont=Std_font, pos1=[72, 72], pos2=[72*6.5, 72*10], options = {} )
   def initialize(filename='ogre.ps', options = {} )
