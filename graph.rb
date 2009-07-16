@@ -735,6 +735,11 @@ class Graph
    	  }
 	
 	dev.multiline( templine, @symbol.pstyle.style ) if templine.size != 0
+
+	p = Proc.new{ |dev, x, y, dx, dy|
+          dev.line([x - dx/4.0, y], [x + dx / 4.0, y], @symbol.pstyle.style)
+	}
+        legend.add( p, @label) if @label != ''
 	
       end
 

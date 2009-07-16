@@ -297,7 +297,7 @@ class PSCanvas < Canvas
     pos1=[72, 72]
     pos2=[72*6.5, 72*10]
     @yinch = 210.0 / 25.4 * 72.0
-    @papsesize = 'A4'
+    @papersize = 'A4'
     @header_p = false
 #    @fp=File.new(filename, mode="w")
 
@@ -393,12 +393,12 @@ class PSCanvas < Canvas
   dup stringwidth pop -2 div 0 R show } def
 
 EOFHEADER
-    if @orientation == 'Landscape' then
+      if @orientation == 'Landscape' then
           @fp.print <<LANDSCAPE
 90 rotate
 0 #{-@yinch} translate
 LANDSCAPE
-    end
+      end
       @header_p = true
     end
   end
