@@ -47,8 +47,8 @@ module Ogre
      Plotstyle.new( "sym_triangle_reverse", true, 
                      Style.new( Color::Green, 2.0, [3, 1, 1, 1], Color::White),1),
 
-     Plotstyle.new( "sym_circle", false, 
-                     Style.new( Color::Black, 1.0, [3, 3], Color::White), 1),
+     Plotstyle.new( "sym_circle", true, 
+                     Style.new( Color::Black, 1.0, [3, 3], Color::Black), 1),
 
      Plotstyle.new( "sym_circle", false,
                      Style.new( Color::Black, 1.0, [1, 1], Color::White), 1),

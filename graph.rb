@@ -162,7 +162,7 @@ class Graph
         }
       end
 
-    @label = [ @axis[@axis2].title ] if @label == nil
+#    @label = [ @axis[@axis2].title ] if @label == nil
     @label = [ @label ] unless @label.kind_of?(Array)
 
 
@@ -602,6 +602,7 @@ class Graph
     end
 
     def searchminmax(data, c)
+      p data[0] if $debug
       min = max = data[0][c].to_f
       data.each{ |d|
         if d[c] != nil then 
@@ -609,6 +610,10 @@ class Graph
           max = d[c] if d[c] > max
         end
       }
+      if min == max then
+        min = min - 0.5
+        max = max + 0.5
+      end
       return [min, max]
     end
 
@@ -654,6 +659,10 @@ class Graph
       end
 
 #
+#
+#
+      legend_proc_arr = []
+#
 #     plot x-errorbars
 #
       if @gtype & Ogre::Dummy != 0 then
@@ -697,7 +706,8 @@ class Graph
 	p = Proc.new{ |dev, x, y, dx, dy|
 	  bar_plot(dev, x - dx / 5.0, y - dx / 5.0, x + dx / 5.0, y + dx / 5.0, Ogre::Bar_Style[@nbar] ) 
 	}
-	legend.add( p, @label ) if @label != 'w/o'
+	legend_proc_arr.push(p) if @label != '' && @label != nil
+#	legend.add( p, @label ) if @label != '' && @label != nil
       end
 #
 #     plot lines
@@ -737,9 +747,10 @@ class Graph
 	dev.multiline( templine, @symbol.pstyle.style ) if templine.size != 0
 
 	p = Proc.new{ |dev, x, y, dx, dy|
-          dev.line([x - dx / 4.0, y], [x + dx / 4.0, y], @symbol.pstyle.style)
+          dev.line([x - dx / 3.0, y], [x + dx / 3.0, y], @symbol.pstyle.style)
 	}
-        legend.add( p, @label) if @label != ''
+	legend_proc_arr.push( p ) if @label != '' && @label != nil
+#        legend.add( p, @label) if @label != '' && @label != nil
 	
       end
 
@@ -749,8 +760,10 @@ class Graph
 	  @symbol.plot(dev, v, @factor ) if ! @clip || bound( v )
 	}
 	p = Proc.new{ |dev, x, y, dx, dy| @symbol.plot(dev, [x, y], @factor ) }
-	legend.add( p, @label) if @label != ''
+	legend_proc_arr.push( p ) if @label != '' && @label != nil
+#	legend.add( p, @label) if @label != '' && @label != nil
       end
+    legend.add( legend_proc_arr, @label ) if legend_proc_arr.size != 0 
   end
 
 
@@ -841,8 +854,8 @@ class Graph
     end
 
     def frac( x )
-      if !@logscale 
-         (x - @min) / (@max - @min)
+      if !@logscale
+        (x - @min) / (@max - @min)
       else
         if x > 0 then 
           (log10(x) - log10(@min)) / (log10(@max) - log10(@min))
@@ -1099,7 +1112,6 @@ class Graph
     end
 
     def add( prc, text )
-
       @draws.push( prc )
       @texts.push(text)
       if text != nil && text.length > @maxlen then
@@ -1107,11 +1119,9 @@ class Graph
         @maxlen = text.length
       end
       @nl += 1
-
     end
 
     def plot(dev)
-
       x1 = @style.pos1[0] 
       y1 = @style.pos1[1]
       x2 = @style.pos2[0] 
@@ -1131,7 +1141,7 @@ class Graph
 	x = x1 
 	y = y1 + inc[1] * i
 
-	@draws[i].call( dev, x, y, dx, dy )
+        @draws[i].each{|pr| pr.call( dev, x, y, dx, dy ) }
 
 	x = x2 
         y = y2 + inc[1] * i - Text::eh * 0.5
