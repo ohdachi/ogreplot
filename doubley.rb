@@ -30,7 +30,9 @@ def doubley(data1, x1, y1, data2, x2, y2, options = {}, &proc)
     when 'yrange2'
       options2['yrange'] = value
     else
-      options1[key.to_s] = value
+      if key.to_s != 'block' then
+        options1[key.to_s] = value
+      end
     end
   }
   options2['axis1'] = 0
@@ -45,10 +47,10 @@ def doubley(data1, x1, y1, data2, x2, y2, options = {}, &proc)
     options2['symtype'] = options1['symtype'] + 1 if options2['symtype'] == nil
   end
 
-  if options1['block'] == 1 then
+  if options['block'] == 1 || options[:block] == 1 then
     g = Graph.new(data1, x1, y1, options1, &proc) 
     g.add(data2, x2, y2, options2)
-  elsif options1['block'] == 2
+  elsif options['block'] == 2 || options[:block] == 2
     print "here\n"
     g = Graph.new(data1, x1, y1, options1)
     g.add(data2, x2, y2, options2, &proc)

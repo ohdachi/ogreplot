@@ -146,7 +146,7 @@ EOFHEADER
     tempstyle.color = style.color
     set_style(tempstyle)
 #    @fp.printf("%f %f %f 0 360 arc stroke\n", nv[0], nv[1], symsize * @xwidth)
-     @fp.printf("<circle cx=\"%f\" cy=\"%f\" r=\"%f\" fill=\"rgb(%s)\" />\n", nv[0], nv[1], symsize * @xwidth, tempstyle.color.join(', ') )
+     @fp.printf("<circle cx=\"%f\" cy=\"%f\" r=\"%f\" stroke=\"rgb(%s)\" />\n", nv[0], nv[1], symsize * @xwidth, tempstyle.color.join(', ') )
     set_style(@style) 
 
   end
@@ -166,10 +166,10 @@ EOFHEADER
       when 'C'
         anchor = "middle"
       end
-      @fp.printf("<text x=\"%f\" y=\"%f\" fill=\"rgb(%s)\" font-size=\"%d\" text-anchor=\"%s\"> %s </text>\n", v[0].to_f, v[1].to_f, @style.color.join(','), @font.size * 1.5, anchor, str)
+      @fp.printf("<text x=\"%f\" y=\"%f\" dy=\"%d\" fill=\"rgb(%s)\" font-size=\"%d\" text-anchor=\"%s\"> %s </text>\n", v[0].to_f, v[1].to_f, @font.size * 0.5, @style.color.join(','), @font.size * 1.5, anchor, str)
     else
       print "#{str}, rotation = #{rotation}\n" if $debug
-      mul = 0.8
+      mul = 0.8 # em/eh :magic number for 14pnt font size 
       case justification.upcase
         
       when 'L'
@@ -184,7 +184,6 @@ EOFHEADER
       end
       @fp.printf("<defs> <path stroke=\"rgb(50, 50, 50)\" id=\"#{@id}\" d=\"M %f, %f L%f, %f\" /> </defs>\n", v[0] - offl*Math::cos(rotation / 180.0 * Math::PI),  v[1] + offl*Math::sin(rotation / 180.0 * Math::PI),v[0] + offr*Math::cos(rotation / 180.0 * Math::PI),  v[1] - offr*Math::sin(rotation / 180.0 * Math::PI) )
       @fp.printf("<text fill=\"rgb(%s)\" font-size=\"%d\" > <textPath xlink:href=\"\##{@id}\"> %s </textPath> </text>\n", @style.color.join(','), @font.size * 1.5, str)
-
       @id = @id.succ
     end
   end
@@ -295,10 +294,11 @@ EOFHEADER
       @fp.printf("#{v.join(',')} ")
     }
     @fp.printf("\"")
-    @fp.printf(" stroke-width=\"1\" stroke=\"rgb(#{@style.color.join(',')})\"")
     
     if closed then
-#      @fp.printf("fill=\"rgb(%s)\"", @style.background.join(',') )
+      @fp.printf(" stroke-width=\"1\" stroke=\"rgb(#{@style.color.join(',')})\" fill=\"rgb(#{@style.background.color.join(',')})\"")
+    else
+      @fp.printf(" stroke-width=\"1\" stroke=\"rgb(#{@style.color.join(',')})\"")
     end
     @fp.printf "/>\n"
   end
