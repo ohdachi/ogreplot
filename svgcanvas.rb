@@ -23,7 +23,7 @@ class SVGCanvas < Canvas
 #    @fp=File.new(filename, mode="w")
 
     @orientation = 'Portrait'
-
+    @id='ID01'
 #
 #   option :orientation => 'Landscape', :size => 'A4' e.g. can be passed
 #   style and font are also given by this Hash-style options.
@@ -97,7 +97,8 @@ class SVGCanvas < Canvas
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
 "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
 <svg width="800pt" height="600pt"
-xmlns="http://www.w3.org/2000/svg">
+ xmlns="http://www.w3.org/2000/svg"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
 EOFHEADER
       @header_p = true
     end
@@ -152,29 +153,43 @@ EOFHEADER
 
   def device_line(v1, v2)
 #   @fp.printf("%f %f moveto %f %f lineto stroke \n",  v1[0], v1[1], v2[0], v2[1])
-     @fp.printf("<line x1=\"%f\" y1=\"%f\" x2=\"%f\"  y2=\"%f\" stroke-width=\"1\" stroke=\"rgb(%s)\" />\n" ,v1[0], v1[1],v2[0], v2[1], @style.color.join(',') )
+     @fp.printf("<line x1=\"%f\" y1=\"%f\" x2=\"%f\" y2=\"%f\" stroke-width=\"1\" stroke=\"rgb(%s)\" />\n" ,v1[0], v1[1],v2[0], v2[1], @style.color.join(',') )
   end
 
   def device_putchar( str, v , justification, rotation = 0)
-#    @fp.printf("%f %f moveto (%s) show \n", v[0], v[1], str)
-#    print "just="+justification+"\n"
+    if rotation.to_f == 0 then 
+      case justification.upcase
+      when 'L'
+        anchor = "start"
+      when 'R'
+        anchor = "end"
+      when 'C'
+        anchor = "middle"
+      end
+      @fp.printf("<text x=\"%f\" y=\"%f\" fill=\"rgb(%s)\" font-size=\"%d\" text-anchor=\"%s\"> %s </text>\n", v[0].to_f, v[1].to_f, @style.color.join(','), @font.size * 1.5, anchor, str)
+    else
+      print "#{str}, rotation = #{rotation}\n" if $debug
+      mul = 0.8
+      case justification.upcase
+        
+      when 'L'
+        offl = 0
+        offr = str.length * @font.size * mul
+      when 'R'
+        offl = str.length * @font.size * mul
+        offr = 0
+      when 'C'
+        offl = str.length * @font.size * mul * 0.5
+        offr = str.length * @font.size * mul * 0.5
+      end
+      @fp.printf("<defs> <path stroke=\"rgb(50, 50, 50)\" id=\"#{@id}\" d=\"M %f, %f L%f, %f\" /> </defs>\n", v[0] - offl*Math::cos(rotation / 180.0 * Math::PI),  v[1] + offl*Math::sin(rotation / 180.0 * Math::PI),v[0] + offr*Math::cos(rotation / 180.0 * Math::PI),  v[1] - offr*Math::sin(rotation / 180.0 * Math::PI) )
+      @fp.printf("<text fill=\"rgb(%s)\" font-size=\"%d\" > <textPath xlink:href=\"\##{@id}\"> %s </textPath> </text>\n", @style.color.join(','), @font.size * 1.5, str)
 
-#    @fp.printf("%f %f M \n", v[0], v[1])
-=begin
-    @fp.printf("currentpoint gsave translate %f rotate \n", rotation) if rotation != 0
-    case justification.upcase
-    when 'L'
-      @fp.printf("(%s) Lshow \n", str)
-    when 'R'
-      @fp.printf("(%s) Rshow \n", str)
-    when 'C'
-      @fp.printf("(%s) Cshow \n", str)
+      @id = @id.succ
     end
-    @fp.printf("grestore\n") if rotation != 0
-=end
   end
-
   def device_putchar2( str, v , justification, rotation = 0)
+    device_putchar(str, v, justification, rotation)
 =begin
 @fp.printf("%f %f M \n", v[0], v[1])
 
@@ -289,7 +304,7 @@ EOFHEADER
   end
 
   def trans(v)
-    [ @x0 + @xwidth * v[0], @y0 + @ywidth * v[1] ]
+    [ @x0 + @xwidth * v[0], @y0  + @ywidth - @ywidth * v[1] ]
   end
 
   def closer
