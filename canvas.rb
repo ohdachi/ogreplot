@@ -45,6 +45,7 @@ attr_accessor :style, :font, :xwidth, :ywidth, :pos1, :pos2
 
     @xwidth  = @ywidth = 100
     @defaultsymsize=0.01
+    @dtheta = 0 unless defined?(@dtheta)
 
     setwhole()
     if block_given? then
@@ -178,25 +179,25 @@ attr_accessor :style, :font, :xwidth, :ywidth, :pos1, :pos2
 
   def sym_triangle(v0,  closed = nil, style = @style, factor = 1.0)
     symsize = @defaultsymsize * factor
-    vects = mkpoly( 3 , 90, 120, symsize * @xwidth).collect{ |v| vadd(trans(v0), v) }
+    vects = mkpoly( 3 , 90 + @dtheta, 120, symsize * @xwidth).collect{ |v| vadd(trans(v0), v) }
     sym_common(vects, closed, style)
   end
 
   def sym_triangle_reverse(v0,  closed = nil, style = @style, factor = 1.0)
     symsize = @defaultsymsize * factor
-    vects = mkpoly( 3 , 30, 120, symsize * @xwidth).collect{ |v| vadd(trans(v0), v) }
+    vects = mkpoly( 3 , 30 + @dtheta, 120, symsize * @xwidth).collect{ |v| vadd(trans(v0), v) }
     sym_common(vects, closed, style)
   end
 
   def sym_square(v0,  closed  = nil, style = @style, factor = 1.0)
     symsize = @defaultsymsize * factor
-    vects = mkpoly( 4 , 45, 90, symsize * @xwidth).collect{ |v| vadd(trans(v0), v) }
+    vects = mkpoly( 4 , 45 + @dtheta, 90, symsize * @xwidth).collect{ |v| vadd(trans(v0), v) }
     sym_common(vects, closed, style)
   end
 
   def sym_diamond(v0,  closed = nil, style = @style, factor = 1.0)
     symsize = @defaultsymsize * factor
-    vects = mkpoly( 4 , 0, 90, symsize * @xwidth).collect{ |v| vadd(trans(v0), v) }
+    vects = mkpoly( 4 , 0 + @dtheta, 90, symsize * @xwidth).collect{ |v| vadd(trans(v0), v) }
     sym_common(vects, closed, style)
   end
 

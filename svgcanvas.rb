@@ -16,14 +16,14 @@ class SVGCanvas < Canvas
     defaultstyle=Std_style
     defaultfont=Std_font
     pos1=[72, 72]
-    pos2=[72*6.5, 72*10]
+    pos2=[72*6.5*1, 72*10*1]
     @yinch = 210.0 / 25.4 * 72.0
     @papersize = 'A4'
     @header_p = false
 #    @fp=File.new(filename, mode="w")
 
     @orientation = 'Portrait'
-    @id='ID01'
+    @useid='ID01'
 #
 #   option :orientation => 'Landscape', :size => 'A4' e.g. can be passed
 #   style and font are also given by this Hash-style options.
@@ -57,6 +57,7 @@ class SVGCanvas < Canvas
     
     @pos1_whole, @pos2_whole = pos1.collect{|i| i.to_f}, pos2.collect{|i| i.to_f}
 #    setwhole()
+    @dtheta = 180
     super(filename, defaultstyle, defaultfont)
 #    set_style(@style)
 #    set_font(@font)
@@ -96,7 +97,7 @@ class SVGCanvas < Canvas
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
 "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="800pt" height="600pt"
+<svg width="800pt" height="1200pt"
  xmlns="http://www.w3.org/2000/svg"
  xmlns:xlink="http://www.w3.org/1999/xlink">
 EOFHEADER
@@ -105,6 +106,7 @@ EOFHEADER
   end
 
   def set_style(at = @defaultstyle)
+    @style= at
 =begin
     @fp.printf("%f %f %f setrgbcolor\n",  at.color[0].to_f / 255.0, at.color[1].to_f / 255.0, at.color[2].to_f / 255.0)
     @fp.printf("%f setlinewidth\n", at.width)
@@ -137,26 +139,29 @@ EOFHEADER
       tempstyle.color = Color::White
     end
 
-#    if closed then
+    if closed then
       set_style(tempstyle)
-#      @fp.printf("%f %f %f 0 360 arc fill\n", nv[0], nv[1], symsize * @xwidth)
        @fp.printf("<circle cx=\"%f\" cy=\"%f\" r=\"%f\" fill=\"rgb(%s)\" />\n", nv[0], nv[1], symsize * @xwidth, tempstyle.color.join(', ') )
-#    end
+    end
     
     tempstyle.color = style.color
     set_style(tempstyle)
-#    @fp.printf("%f %f %f 0 360 arc stroke\n", nv[0], nv[1], symsize * @xwidth)
-     @fp.printf("<circle cx=\"%f\" cy=\"%f\" r=\"%f\" stroke=\"rgb(%s)\" />\n", nv[0], nv[1], symsize * @xwidth, tempstyle.color.join(', ') )
+    @fp.printf("<circle cx=\"%f\" cy=\"%f\" r=\"%f\" stroke=\"rgb(%s)\" fill=\"none\"/>\n", nv[0], nv[1], symsize * @xwidth, tempstyle.color.join(', ') )
     set_style(@style) 
 
   end
 
   def device_line(v1, v2)
 #   @fp.printf("%f %f moveto %f %f lineto stroke \n",  v1[0], v1[1], v2[0], v2[1])
+    if @style.linestyle == [0] then 
      @fp.printf("<line x1=\"%f\" y1=\"%f\" x2=\"%f\" y2=\"%f\" stroke-width=\"1\" stroke=\"rgb(%s)\" />\n" ,v1[0], v1[1],v2[0], v2[1], @style.color.join(',') )
+   else
+     @fp.printf("<line x1=\"%f\" y1=\"%f\" x2=\"%f\" y2=\"%f\" stroke-width=\"1\" stroke=\"rgb(%s)\" stroke-dasharray=\"%s\" />\n" ,v1[0], v1[1],v2[0], v2[1], @style.color.join(','), @style.linestyle.join(',') )
+   end
   end
 
   def device_putchar( str, v , justification, rotation = 0)
+    mul = 0.1 # em/eh :magic number for 14pnt font size 
     if rotation.to_f == 0 then 
       case justification.upcase
       when 'L'
@@ -166,25 +171,19 @@ EOFHEADER
       when 'C'
         anchor = "middle"
       end
-      @fp.printf("<text x=\"%f\" y=\"%f\" dy=\"%d\" fill=\"rgb(%s)\" font-size=\"%d\" text-anchor=\"%s\"> %s </text>\n", v[0].to_f, v[1].to_f, @font.size * 0.5, @style.color.join(','), @font.size * 1.5, anchor, str)
+
+       @fp.printf("<g transform=\"translate(%f,%f)\" style=\"stroke:none; fill:black; font-family:Arial; font-size:%f; text-anchor:%s\">\n<text>%s</text>\n</g>", v[0], v[1] + @font.size * mul, @font.size, anchor, str)
     else
       print "#{str}, rotation = #{rotation}\n" if $debug
-      mul = 0.8 # em/eh :magic number for 14pnt font size 
       case justification.upcase
-        
       when 'L'
-        offl = 0
-        offr = str.length * @font.size * mul
+        anchor = "start"
       when 'R'
-        offl = str.length * @font.size * mul
-        offr = 0
+        anchor = "end"
       when 'C'
-        offl = str.length * @font.size * mul * 0.5
-        offr = str.length * @font.size * mul * 0.5
+        anchor = "middle"
       end
-      @fp.printf("<defs> <path stroke=\"rgb(50, 50, 50)\" id=\"#{@id}\" d=\"M %f, %f L%f, %f\" /> </defs>\n", v[0] - offl*Math::cos(rotation / 180.0 * Math::PI),  v[1] + offl*Math::sin(rotation / 180.0 * Math::PI),v[0] + offr*Math::cos(rotation / 180.0 * Math::PI),  v[1] - offr*Math::sin(rotation / 180.0 * Math::PI) )
-      @fp.printf("<text fill=\"rgb(%s)\" font-size=\"%d\" > <textPath xlink:href=\"\##{@id}\"> %s </textPath> </text>\n", @style.color.join(','), @font.size * 1.5, str)
-      @id = @id.succ
+       @fp.printf("<g transform=\"translate(%f,%f) rotate(%f)\" style=\"stroke:none; fill:black; font-family:Arial; font-size:%f; text-anchor:%s\">\n<text>%s</text>\n</g>", v[0], v[1] + @font.size * mul, -rotation, @font.size, anchor, str)
     end
   end
   def device_putchar2( str, v , justification, rotation = 0)
@@ -287,20 +286,33 @@ EOFHEADER
   end
 
 
-  def device_multiline( vects, closed ) 
-    n = vects.size
-    @fp.printf("<polygon points=\"")
-    vects.each{|v|
-      @fp.printf("#{v.join(',')} ")
-    }
-    @fp.printf("\"")
-    
-    if closed then
-      @fp.printf(" stroke-width=\"1\" stroke=\"rgb(#{@style.color.join(',')})\" fill=\"rgb(#{@style.background.color.join(',')})\"")
+  def device_multiline( vects, closed )
+    if @style.linestyle != [0] then
+      if closed then
+        fill = "rgb(#{@style.color.join(',')})"
+      else
+        fill = "none"
+      end
+      @fp.print("<symbol stroke-width=\"1\" id=\"#{@useid}\" stroke=\"rgb(#{@style.color.join(',')})\" fill=\"#{fill}\" >\n")
+      n = vects.size
+      @fp.printf("<polygon points=\"")
+      vects.each{|v| @fp.printf("#{v.join(',')} ") }
+
+      @fp.printf("\" />\n </symbol>\n")
+
+      @fp.print("<use xlink:href=\"##{@useid}\" stroke-dasharray=\"#{@style.linestyle.join(',')}\" />\n")
+      @useid.succ!
     else
-      @fp.printf(" stroke-width=\"1\" stroke=\"rgb(#{@style.color.join(',')})\"")
+      if closed then
+        fill = "rgb(#{@style.color.join(',')})"
+      else
+        fill = "none"
+      end
+      @fp.printf("<polygon points=\"")
+      vects.each{|v| @fp.printf("#{v.join(',')} ") }
+      @fp.print("\" stroke-width=\"1\" stroke=\"rgb(#{@style.color.join(',')})\" fill=\"#{fill}\" />\n")
     end
-    @fp.printf "/>\n"
+
   end
 
   def trans(v)
