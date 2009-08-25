@@ -289,13 +289,14 @@ EOFHEADER
   def device_multiline( vects, closed )
     if @style.linestyle != [0] then
       if closed then
-        fill = "rgb(#{@style.color.join(',')})"
+        @fp.print("<symbol stroke-width=\"1\" id=\"#{@useid}\" stroke=\"rgb(#{@style.color.join(',')})\" fill=\"rgb(#{@style.color.join(',')})\" >\n")
+        @fp.printf("<polygon points=\"")
       else
         fill = "none"
+        @fp.print("<symbol stroke-width=\"1\" id=\"#{@useid}\" stroke=\"rgb(#{@style.color.join(',')})\" fill=\"none\" >\n")
+        @fp.printf("<polyline points=\"")
       end
-      @fp.print("<symbol stroke-width=\"1\" id=\"#{@useid}\" stroke=\"rgb(#{@style.color.join(',')})\" fill=\"#{fill}\" >\n")
       n = vects.size
-      @fp.printf("<polygon points=\"")
       vects.each{|v| @fp.printf("#{v.join(',')} ") }
 
       @fp.printf("\" />\n </symbol>\n")
@@ -305,10 +306,11 @@ EOFHEADER
     else
       if closed then
         fill = "rgb(#{@style.color.join(',')})"
+        @fp.printf("<polygon points=\"")
       else
         fill = "none"
+        @fp.printf("<polyline points=\"")
       end
-      @fp.printf("<polygon points=\"")
       vects.each{|v| @fp.printf("#{v.join(',')} ") }
       @fp.print("\" stroke-width=\"1\" stroke=\"rgb(#{@style.color.join(',')})\" fill=\"#{fill}\" />\n")
     end
