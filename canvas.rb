@@ -302,8 +302,8 @@ class PSCanvas < Canvas
 
     defaultstyle=Std_style
     defaultfont=Std_font
-    pos1=[72, 72]
-    pos2=[72*6.5, 72*10]
+    pos1=[72*2, 72*2]
+    pos2=[72*7.5, 72*11]
     @yinch = 210.0 / 25.4 * 72.0
     @papersize = 'A4'
     @header_p = false

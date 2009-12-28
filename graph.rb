@@ -668,30 +668,34 @@ class Graph
       n2 = @data.size
       (0 .. n1-2).each{|i|
         (0 .. n2-2).each{|j|
+#      (0 .. 4).each{|i|
+#        (0 .. 4).each{|j|
           x1, x2 = @xarr[i], @xarr[i+1]
           y1, y2 = @yarr[j], @yarr[j+1]
-          triangle([ @xarr[i], @yarr[j], @data[j][i] ], [@xarr[i+1], @yarr[j], @data[j][i+1] ],[@xarr[i+1], @yarr[j+1], @data[j+1][i+1] ])
-          triangle([@xarr[i], @yarr[j], @data[j][i] ], [@xarr[i], @yarr[j+1], @data[j+1][i] ],[@xarr[i+1], @yarr[j+1], @data[j+1][i+1] ])
+          triangle([ x1, y1, @data[j][i].to_f ], [x2, y1, @data[j][i+1].to_f ],[x2, y2, @data[j+1][i+1].to_f ])
+          triangle([ x1, y1, @data[j][i].to_f ], [x1, y2, @data[j+1][i].to_f ],[x2, y2, @data[j+1][i+1].to_f ])
+#          triangle([ @xarr[i], @yarr[j], @data[j][i] ], [@xarr[i+1], @yarr[j], @data[j][i+1] ],[@xarr[i+1], @yarr[j+1], @data[j+1][i+1] ])
+#          triangle([@xarr[i], @yarr[j], @data[j][i] ], [@xarr[i], @yarr[j+1], @data[j+1][i] ],[@xarr[i+1], @yarr[j+1], @data[j+1][i+1] ])
         }
       }
     end
-    def triangle( p1, p2, p3)
+    def triangle(p1, p2, p3)
       le = {}
       lines = [ [p1,p2], [p2,p3], [p3,p1] ]
       lines.each{ |t1, t2|
         x1, y1, v1 = t1
         x2, y2, v2 = t2
         
-        #      print "#{x1},  #{y1},  #{v1},  #{x2},  #{y2},  #{v2}\n"
+#      print "#{x1},  #{y1},  #{v1},  #{x2},  #{y2},  #{v2}\n"
         if v1 == v2 then
           @levels.each{|level|
             if level == v1 then
-              addclines( x1, y1, x2, y2)
+              addclines(v1, x1, y1, x2, y2)
             end
           }
         else
           @levels.each{|level|
-            if (v1 - level) * (level - v2) > 0.0  then
+            if (v1 - level) * (level - v2) >= 0.0  then
               f1 = (level - v1) / (v2 - v1)
               f2 = (v2 - level) / (v2 - v1)
               if le[level] == nil then
@@ -703,13 +707,17 @@ class Graph
           }
         end
       }
+#      p p1, p2, p3, le
       le.each{|v, arr|
         if arr.size == 2 then
           addclines( v, arr[0][0], arr[0][1], arr[1][0], arr[1][1] )
-        else
-          print "!err!\n"
-          p arr
-          print "!err!\n"
+        elsif arr.size == 3 then
+          arr.uniq!
+          addclines( v, arr[0][0], arr[0][1], arr[1][0], arr[1][1] ) if arr.size == 2
+#        else
+#          print "!err!\n"
+#          p p1, p2, p3, v, arr
+#          print "!err!\n"
         end
       }
     end
@@ -886,6 +894,7 @@ class Graph
 
       if @gtype & Ogre::Contour != 0 then
         contour()
+        ip = 0
         @clines.each{|v, cl|
           #      p v
           cl.each{|e|
@@ -896,12 +905,11 @@ class Graph
             unless @clip then 
               dev.multiline( lines, @symbol.pstyle.style  )
             else
-#
-#       clipping of lines
-#
+#             @symbol = PlotSymbol.new(Ogre::Std_plotstyle[ip])
               drawline_with_clip(lines, dev)
             end
           }
+#          ip = (ip + 1) % 8
         }
       end
       legend.add( legend_proc_arr, @label ) if legend_proc_arr.size != 0 
