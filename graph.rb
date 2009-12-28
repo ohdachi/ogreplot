@@ -668,6 +668,22 @@ class Graph
       end
     end
 
+    def extend_line(line, x3, y3, x4, y4)
+      pextend = true
+      if line[0][0] == x3 && line[0][1] == y3 then
+        line.push( [x4, y4])
+      elsif line[0][0] == x4 && line[0][1] == y4 then
+        line.push( [x3, y3] )
+      elsif line[-1][0] == x3 && line[-1][1] == y3  then
+        line.unshift([x4, y4])
+      elsif line[-1][0] == x4 && line[-1][1] == y4 then
+        line.unshift([x3, y3])
+      else
+        pextend = false
+      end
+      pextend
+    end
+
     def contour
       n1 = @data[0].size
       n2 = @data.size
@@ -692,6 +708,7 @@ class Graph
           @levels.each{|level|
             if level == v1 then
               addclines(v1, x1, y1, x2, y2)
+#              add_clines( v1, x1, y1, x2, y2 )
             end
           }
         else
@@ -715,15 +732,35 @@ class Graph
       le.each{|v, arr|
         if arr.size == 2 then
           addclines( v, arr[0][0], arr[0][1], arr[1][0], arr[1][1] )
+#          add_clines( v, arr[0][0], arr[0][1], arr[1][0], arr[1][1] )
         elsif arr.size == 3 then
           arr.uniq!
-          addclines( v, arr[0][0], arr[0][1], arr[1][0], arr[1][1] ) 
+          addclines( v, arr[0][0], arr[0][1], arr[1][0], arr[1][1] )
+#          add_clines( v, arr[0][0], arr[0][1], arr[1][0], arr[1][1] )
+
 #        else
 #          print "!err!\n"
 #          p p1, p2, p3, v, arr
 #          print "!err!\n"
         end
       }
+    end
+
+    def add_clines(v, x1, y1, x2, y2)
+      if @clines[v] == nil then
+        @clines[v] = [[ [x1, y1], [x2, y2] ]]
+      else
+        pextended = false
+        @clines[v].each{|el|
+          if extend_line(el, x1, y1, x2, y2)
+            pextend = true
+            break
+          end
+        }
+        if pextended == false
+          @clines[v].push( [[x1, y1], [x2, y2]] )
+        end
+      end
     end
 
     def addclines(v, x1, y1, x2, y2)
@@ -873,13 +910,14 @@ class Graph
       end
 
       if @gtype & Ogre::Contour != 0 then
+
         contour()
-        ip = 0
+#        ip = 0
         @clines.each{|v, cl|
-          #      p v
           cl.each{|e|
-            #p e.lines
+
             lines = e.lines.collect{|data|
+#            lines = e.collect{|data|
               [@xaxis.frac( data[0]), @yaxis.frac(data[1])]
             }
             unless @clip then 
@@ -891,6 +929,7 @@ class Graph
           }
 #          ip = (ip + 1) % 8
         }
+
       end
       legend.add( legend_proc_arr, @label ) if legend_proc_arr.size != 0 
     end

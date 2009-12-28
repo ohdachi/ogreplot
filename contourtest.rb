@@ -1,5 +1,5 @@
 require 'graph'
-
+t1 = Time.now
 data = (0 .. 99).collect{|i| Array.new(100)}
 (0 .. 99).each{|i|
   (0 .. 99).each{|j|
@@ -21,4 +21,6 @@ PSCanvas.new('test.ps') do |ps|
   ps.setpart [0.1, 0.5], [0.9, 0.8]
   c2.plot(ps)
 end
-  
+t2 = Time.now
+print t1, ',', t2, ',', t2-t1
+
