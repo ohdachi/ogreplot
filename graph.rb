@@ -161,6 +161,7 @@ class Graph
             self.send(key.to_s + '=', value)
           rescue
             printf("'%s' is not the chractreisitc of class Graph. It is ignored \n", key)
+#           raise, "#{key} is not a characteristiec of the class Graph. ignored")
           end
         }
       end
@@ -596,6 +597,10 @@ class Graph
 
     def searchminmax(data, c)
       p data[0] if $debug
+
+      if data.class != Array || data[0].class != Array
+        raise 'Data should be 2D array like data[0][1]'
+      end
       min = max = data[0][c].to_f
       data.each{ |d|
         if d[c] != nil then 
@@ -668,14 +673,10 @@ class Graph
       n2 = @data.size
       (0 .. n1-2).each{|i|
         (0 .. n2-2).each{|j|
-#      (0 .. 4).each{|i|
-#        (0 .. 4).each{|j|
           x1, x2 = @xarr[i], @xarr[i+1]
           y1, y2 = @yarr[j], @yarr[j+1]
           triangle([ x1, y1, @data[j][i].to_f ], [x2, y1, @data[j][i+1].to_f ],[x2, y2, @data[j+1][i+1].to_f ])
           triangle([ x1, y1, @data[j][i].to_f ], [x1, y2, @data[j+1][i].to_f ],[x2, y2, @data[j+1][i+1].to_f ])
-#          triangle([ @xarr[i], @yarr[j], @data[j][i] ], [@xarr[i+1], @yarr[j], @data[j][i+1] ],[@xarr[i+1], @yarr[j+1], @data[j+1][i+1] ])
-#          triangle([@xarr[i], @yarr[j], @data[j][i] ], [@xarr[i], @yarr[j+1], @data[j+1][i] ],[@xarr[i+1], @yarr[j+1], @data[j+1][i+1] ])
         }
       }
     end
@@ -695,9 +696,12 @@ class Graph
           }
         else
           @levels.each{|level|
-            if (v1 - level) * (level - v2) >= 0.0  then
-              f1 = (level - v1) / (v2 - v1)
-              f2 = (v2 - level) / (v2 - v1)
+            f1 = (v1 - level)
+            f2 = (level - v2) 
+            
+            if f1 * f2 >= 0.0  then
+              f1 /= (v1-v2)
+              f2 /= (v1-v2)
               if le[level] == nil then
                 le[level] = [ [x1 * f2 + x2 * f1, y1 * f2 + y2 * f1 ] ]
               else
@@ -713,7 +717,7 @@ class Graph
           addclines( v, arr[0][0], arr[0][1], arr[1][0], arr[1][1] )
         elsif arr.size == 3 then
           arr.uniq!
-          addclines( v, arr[0][0], arr[0][1], arr[1][0], arr[1][1] ) if arr.size == 2
+          addclines( v, arr[0][0], arr[0][1], arr[1][0], arr[1][1] ) 
 #        else
 #          print "!err!\n"
 #          p p1, p2, p3, v, arr
@@ -757,7 +761,7 @@ class Graph
       print "xrange = #{@xaxis.min},#{@xaxis.max}\n" if $debug
       print "yrange = #{@yaxis.min},#{@yaxis.max}\n" if $debug
 
-      unless @gtype & Ogre::Contour then
+      if @gtype & Ogre::Contour == 0 then
         xmin, xmax = searchminmax(@data, @c1)
         ymin, ymax = searchminmax(@data, @c2)
       else
@@ -849,31 +853,7 @@ class Graph
 #
 #       clipping of lines
 #
-        drawline_with_clip(line, dev)
-=begin
-          templine = []
-	  templine.push( lines[0] ) if bound( lines[0] )
-	  (0 ... lines.size - 1).each {|i|
-	    res, cr = intersect( lines[i], lines[i+1] )
-	    if res == 0 then   # if both point are inside
-	      templine.push( lines[i+1] )
-	    elsif res == 1 then  # only first point is inside
-	      templine.push( cr[0] )
-	      dev.multiline( templine, @symbol.pstyle.style )
-	      templine = []
-	    elsif res == 2 then  # second point is inside
-	      templine.push( cr[0] )
-	      templine.push( lines[i+1] )
-	    elsif res == 3 then  # only frangment is inside
-	      templine.push( cr[0] )
-	      templine.push( cr[1] )
-	      dev.multiline( templine, @symbol.pstyle.style )
-	      templine = []
-	    end
-   	  }
-	
-	dev.multiline( templine, @symbol.pstyle.style ) if templine.size != 0
-=end
+        drawline_with_clip(lines, dev)
 	p = Proc.new{ |dev, x, y, dx, dy|
           dev.line([x - dx / 3.0, y], [x + dx / 3.0, y], @symbol.pstyle.style)
 	}

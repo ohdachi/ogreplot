@@ -62,4 +62,7 @@ vrcanvas
 
 ruby/dlをつかってretrieveのデータをアクセス
 
+-------------------------------
+
+PDF canvas のサポート
 
