@@ -64,6 +64,9 @@ class Graph
   attr_accessor :symtype, :symfactor, :symbol
   attr_accessor :legend
   attr_accessor :barwidth
+  attr_accessor :xarr, :yarr # for contour plot
+  attr_accessor :clines, :levels # for contour plot
+  
   def initialize(data, c1 = 0, c2 = 0, options = {}, &proc)
 #
 #   Set up for axis (xaxis, yaxis, ..., y4axis)
@@ -161,7 +164,6 @@ class Graph
           end
         }
       end
-
 #    @label = [ @axis[@axis2].title ] if @label == nil
     @label = [ @label ] unless @label.kind_of?(Array)
 
@@ -240,7 +242,7 @@ class Graph
 #
 #   bar plot
 #
-    if ( gtype & Ogre::Bar !=0 ) then
+    if  gtype & Ogre::Bar !=0  then
       
       if c1.kind_of?(Array) then
         if c1.size == 2 then
@@ -258,31 +260,7 @@ class Graph
         dc = c1
         xedata = data.collect{|d| [ d[dc] + @barwidth * 0.5, d[dc] - @barwidth * 0.5] }
       end
-=begin
-      if c2.kind_of?(Array) then # stacked bar graph
-	sdata = []
-	yedata = []
-	data.each{ |d|
-	  temp1 = [ 0.0 ]
-	  c2.each{ |c|
-	    temp1.push( temp1[-1] + d[c]  )
-	  }
-	  yedata.push( (0 ... c2.size).collect{|i| [ temp1[ i ], temp1[ i + 1 ] ]} )
-	}
-	cye = (0 ... c2.size).collect{|i| i }
 
-	if yrange != nil then
-	  vmin = 0.0
-	  vmax = 0.0
-	  ntotal = cye[-1]
-	  yedata.each{|d|
-	    vmax = d[ntotal][1] if d[ntotal][1] > vmax
-	    vmin = d[ntotal][1] if d[ntotal][1] < vmin
-	  }
-	  print "yrange = #{vmin}, #{vmax}\n" if $debug
-	  yrange = [vmin, vmax]
-	end
-=end
       if c2.kind_of?(Array) then # stacked bar graph
         yedata = data.collect{|d|
           (0 ... c2.size - 1).collect{|i|
@@ -295,18 +273,30 @@ class Graph
 	yedata = data.collect{|d| [[0.0, d[c2] ]]} 
         cye = 0
       end
-      if xrange == nil then
+      if @xrange == nil then
         temp = xedata.flatten
         vmin, vmax = temp.min, temp.max
-        print "yrange = #{vmin}, #{vmax}\n" if $debug
-        xrange = [vmin, vmax]
+        print "xrange = #{vmin}, #{vmax}\n" if $debug
+        @xrange = [vmin, vmax]
       end
-      if yrange == nil then
+      if @yrange == nil then
         temp = yedata.flatten
         vmin, vmax = temp.min, temp.max
         print "yrange = #{vmin}, #{vmax}\n" if $debug
-        yrange = [vmin, vmax]
+        @yrange = [vmin, vmax]
       end
+    end
+#
+#   contour plot
+#
+
+    if @gtype & Ogre::Contour != 0 then
+      n1 = data[0].size
+      n2 = data.size
+      @xarr = (0 .. n1-1).collect{|i| i.to_f} if @xarr == nil
+      @yarr = (0 .. n2-1).collect{|i| i.to_f} if @yarr == nil
+      p @xarr, @levels
+
     end
 #
 #   if multi column is specified, we call Plot.new for each combination
@@ -340,7 +330,8 @@ class Graph
           @symbols[@symtype[ i % @symtype.size ]  % @nsymbol],
           @symfactor,
           @symtype[ i  % @symtype.size] % @nbar,
-          @label[ i % @label.size]  ) )
+          @label[ i % @label.size],
+          @xarr, @yarr, @levels) )
 
       @axis[@axis1].range = @xrange if @axis[@axis1].range == nil
       @axis[@axis2].range = @yrange if @axis[@axis2].range == nil
@@ -500,9 +491,9 @@ class Graph
 =end
 
   class Plot
-    attr_accessor :data, :c1, :c2, :clip
+    attr_accessor :data, :c1, :c2, :clip, :xarr, :yarr
     @@bs = nil
-    def initialize(data, xedata, yedata, c1, c2, cye, xaxis, yaxis, gtype, symbol = nil, factor = 1.0, nbar = nil, label = '')
+    def initialize(data, xedata, yedata, c1, c2, cye, xaxis, yaxis, gtype, symbol = nil, factor = 1.0, nbar = nil, label = '', xarr = nil, yarr = nil, levels = nil)
 
       @data = data
       @xedata , @yedata = xedata, yedata
@@ -522,6 +513,10 @@ class Graph
       @errsize = 0.01
       @clip = true
       @label = label
+      @xarr = xarr
+      @yarr = yarr
+      @levels = levels
+      @clines = {} # for contour
     end
 
 #    @ptri = proc { |v0, color| sym_triangele(v0, color) }
@@ -617,6 +612,127 @@ class Graph
       return [min, max]
     end
 
+    def drawline_with_clip(lines, dev)
+      templine = []
+      templine.push( lines[0] ) if bound( lines[0] )
+      (0 ... lines.size - 1).each {|i|
+        res, cr = intersect( lines[i], lines[i+1] )
+        if res == 0 then   # if both point are inside
+          templine.push( lines[i+1] )
+        elsif res == 1 then  # only first point is inside
+          templine.push( cr[0] )
+          dev.multiline( templine, @symbol.pstyle.style )
+          templine = []
+        elsif res == 2 then  # second point is inside
+          templine.push( cr[0] )
+          templine.push( lines[i+1] )
+        elsif res == 3 then  # only frangment is inside
+          templine.push( cr[0] )
+          templine.push( cr[1] )
+          dev.multiline( templine, @symbol.pstyle.style )
+          templine = []
+        end
+      }
+      
+      dev.multiline( templine, @symbol.pstyle.style ) if templine.size != 0
+    end
+    
+    class Extendedlines
+      attr_accessor :lines
+      def initialize(x1, y1, x2, y2)
+        @x1, @y1 = x1, y1
+        @x2, @y2 = x2, y2
+        @lines = [ [x1, y1], [x2, y2] ]
+      end
+      def add(x3, y3, x4, y4)
+        pextend = true
+        if @x1 == x3 && @y1 == y3 then
+          @lines.unshift([x4, y4])
+          @x1, @y1 = x4, y4
+        elsif @x1 == x4 && @y1 == y4
+          @lines.unshift([x3, y3])
+          @x1, @y1 = x3, y3
+        elsif @x2 == x3 && @y2 == y3 then
+          @lines.push([x4, y4])
+          @x2, @y2 = x4, y4
+        elsif @x2 == x4 && @y2 == y4
+          @lines.push([x3, y3])
+          @x2, @y2 = x3, y3
+        else
+          pextend = false
+        end
+        pextend
+      end
+    end
+
+    def contour
+      n1 = @data[0].size
+      n2 = @data.size
+      (0 .. n1-2).each{|i|
+        (0 .. n2-2).each{|j|
+          x1, x2 = @xarr[i], @xarr[i+1]
+          y1, y2 = @yarr[j], @yarr[j+1]
+          triangle([ @xarr[i], @yarr[j], @data[j][i] ], [@xarr[i+1], @yarr[j], @data[j][i+1] ],[@xarr[i+1], @yarr[j+1], @data[j+1][i+1] ])
+          triangle([@xarr[i], @yarr[j], @data[j][i] ], [@xarr[i], @yarr[j+1], @data[j+1][i] ],[@xarr[i+1], @yarr[j+1], @data[j+1][i+1] ])
+        }
+      }
+    end
+    def triangle( p1, p2, p3)
+      le = {}
+      lines = [ [p1,p2], [p2,p3], [p3,p1] ]
+      lines.each{ |t1, t2|
+        x1, y1, v1 = t1
+        x2, y2, v2 = t2
+        
+        #      print "#{x1},  #{y1},  #{v1},  #{x2},  #{y2},  #{v2}\n"
+        if v1 == v2 then
+          @levels.each{|level|
+            if level == v1 then
+              addclines( x1, y1, x2, y2)
+            end
+          }
+        else
+          @levels.each{|level|
+            if (v1 - level) * (level - v2) > 0.0  then
+              f1 = (level - v1) / (v2 - v1)
+              f2 = (v2 - level) / (v2 - v1)
+              if le[level] == nil then
+                le[level] = [ [x1 * f2 + x2 * f1, y1 * f2 + y2 * f1 ] ]
+              else
+                le[level].push([x1 * f2 + x2 * f1, y1 * f2 + y2 * f1 ])
+              end
+            end
+          }
+        end
+      }
+      le.each{|v, arr|
+        if arr.size == 2 then
+          addclines( v, arr[0][0], arr[0][1], arr[1][0], arr[1][1] )
+        else
+          print "!err!\n"
+          p arr
+          print "!err!\n"
+        end
+      }
+    end
+
+    def addclines(v, x1, y1, x2, y2)
+      if @clines[v] == nil then
+        @clines[v] = [Extendedlines.new(x1, y1, x2, y2)]
+      else
+        pextended = false
+        @clines[v].each{|el|
+          if el.add(x1, y1, x2, y2) == true
+            pextended = true
+            break
+          end
+        }
+        if pextended == false
+          @clines[v].push(Extendedlines.new(x1, y1, x2, y2))
+        end
+      end
+    end
+
     def plot(dev, legend)
 
 #    miror  withdata range_spesified tick_specified 
@@ -635,8 +751,13 @@ class Graph
       print "xrange = #{@xaxis.min},#{@xaxis.max}\n" if $debug
       print "yrange = #{@yaxis.min},#{@yaxis.max}\n" if $debug
 
-      xmin, xmax = searchminmax(@data, @c1)
-      ymin, ymax = searchminmax(@data, @c2)
+      unless @gtype & Ogre::Contour then
+        xmin, xmax = searchminmax(@data, @c1)
+        ymin, ymax = searchminmax(@data, @c2)
+      else
+        xmin, xmax = @xarr.min, @xarr.max
+        ymin, ymax = @yarr.min, @yarr.max
+      end
 
       if xmin == xmax && ! @xaxis.range_specify then
         @xaxis.range= [@xaxis.range[0] - 1, @xaxis.range[0] + 1]
@@ -657,7 +778,6 @@ class Graph
       else
         @yaxis.determticks(1.0, 10, ymin, ymax) 
       end
-
 #
 #
 #
@@ -723,6 +843,8 @@ class Graph
 #
 #       clipping of lines
 #
+        drawline_with_clip(line, dev)
+=begin
           templine = []
 	  templine.push( lines[0] ) if bound( lines[0] )
 	  (0 ... lines.size - 1).each {|i|
@@ -745,7 +867,7 @@ class Graph
    	  }
 	
 	dev.multiline( templine, @symbol.pstyle.style ) if templine.size != 0
-
+=end
 	p = Proc.new{ |dev, x, y, dx, dy|
           dev.line([x - dx / 3.0, y], [x + dx / 3.0, y], @symbol.pstyle.style)
 	}
@@ -763,8 +885,29 @@ class Graph
 	legend_proc_arr.push( p ) if @label != '' && @label != nil
 #	legend.add( p, @label) if @label != '' && @label != nil
       end
-    legend.add( legend_proc_arr, @label ) if legend_proc_arr.size != 0 
-  end
+
+      if @gtype & Ogre::Contour != 0 then
+        contour()
+        @clines.each{|v, cl|
+          #      p v
+          cl.each{|e|
+            #p e.lines
+            lines = e.lines.collect{|data|
+              [@xaxis.frac( data[0]), @yaxis.frac(data[1])]
+            }
+            unless @clip then 
+              dev.multiline( lines, @symbol.pstyle.style  )
+            else
+#
+#       clipping of lines
+#
+              drawline_with_clip(lines, dev)
+            end
+          }
+        }
+      end
+      legend.add( legend_proc_arr, @label ) if legend_proc_arr.size != 0 
+    end
 
 
     def xerror_plot(dev, dx, dy, ex1, ex2)
@@ -857,6 +1000,9 @@ class Graph
       if !@logscale
         (x - @min) / (@max - @min)
       else
+        if max <=0.0 || min <= 0.0 then
+          print "#{max}, #{min}\n"
+        end
         if x > 0 then 
           (log10(x) - log10(@min)) / (log10(@max) - log10(@min))
         else
@@ -947,7 +1093,8 @@ class Graph
       }
     end
 
-    def determticks(step, mstep, min = @min, max = @max, logscale = nil)
+#    def determticks(step, mstep, min = @min, max = @max, logscale = nil)
+    def determticks(step, mstep, min, max, logscale = nil)
       steps = [1.0, 2.0, 5.0]
       msteps = [10, 2, 5]
       if ! @logscale then
@@ -973,7 +1120,13 @@ class Graph
 
       else
         #logscale
-        dif = (log10(max) - log10(min)).floor
+
+        if min <= 0.0 || max <= 0.0 then
+          dif = 0.0
+        else
+          dif = (log10(max) - log10(min)).floor
+        end  
+        print "max = #{max}, min = #{min}\n" if $debug
         print "dif=#{dif}\n" if $debug
         case dif
         when 0
@@ -986,10 +1139,9 @@ class Graph
             ntick = ( (@max - @min) / step).to_i
             vticks = (0 .. ntick).collect{ |i| @min + i * step }
             set_ticks(vticks)
-            set_mticks(@mix, @max, ntick, vticks, step, mstep)
             @step, @mstep = step, mstep
           end
-        when 5 .. 9 # Tick:10^n, mtick = 2~9
+        when 1 .. 9 # Tick:10^n, mtick = 2~9
           if ! @range_specify then
             @min = 10**(log10(min).floor)
             @max = 10** (log10(max).floor + 1)
@@ -1004,15 +1156,17 @@ class Graph
           vticks = (0 .. ntick).collect{|i| 10**(log10(@min).ceil + i) }
           set_ticks(vticks)
           @mticks = []
-          (0 .. ntick-1).each{ |i| (2 .. 9).each{|j| @mticks.push(10**(log10(@min).ceil + i) * j) } }
+          (0 .. ntick).each{ |i| (2 .. 9).each{|j| @mticks.push(10**(log10(@min).floor + i) * j) } }
         else  ## Tick:10^n upto 5 in number , mtick = else 
           nskip = (dif / 5.0).floor + 1
-          @min = 10**(log10(min).floor)
-          @max = 10**(log10(max).floor + 1)
-          @range_specify = true
+          if ! @range_specify then
+            @min = 10**(log10(min).floor)
+            @max = 10**(log10(max).floor + 1)
+#            @range_specify = true
+          end
 
-          nst = log10(@min).to_i
-          nen = log10(@max).to_i
+          nst = log10(@min).ceil
+          nen = log10(@max).floor
           vticks = []
           @mticks = []
           (nst .. nen).each{|i|

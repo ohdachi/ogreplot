@@ -20,20 +20,13 @@ def doubley(data1, x1, y1, data2, x2, y2, options = {}, &proc)
 #  options1['block'] = 0
   options.each{|key, value|
 
-    case key.to_s
-    when 'gtype1'
-      options1['gtype'] = value
-    when 'gtype2'
-      options2['gtype'] = value
-    when 'yrange1'
-      options1['yrange'] = value
-    when 'yrange2'
-      options2['yrange'] = value
-    else
-      if key.to_s != 'block' then
+    if /(.*)1/ =~ key.to_s
+      options1[$1] = value
+    elsif /(.*)2/ =~ key.to_s
+      options2[$1] = value
+    elsif key.to_s != 'block' then
         options1[key.to_s] = value
       end
-    end
   }
   options2['axis1'] = 0
   options2['axis2'] = 3
@@ -46,12 +39,12 @@ def doubley(data1, x1, y1, data2, x2, y2, options = {}, &proc)
     options1['symtype'] = 0 if options1['symtype'] == nil
     options2['symtype'] = options1['symtype'] + 1 if options2['symtype'] == nil
   end
-
+  
   if options['block'] == 1 || options[:block] == 1 then
     g = Graph.new(data1, x1, y1, options1, &proc) 
     g.add(data2, x2, y2, options2)
   elsif options['block'] == 2 || options[:block] == 2
-    print "here\n"
+#    print "here\n"
     g = Graph.new(data1, x1, y1, options1)
     g.add(data2, x2, y2, options2, &proc)
   else

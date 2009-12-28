@@ -161,7 +161,7 @@ attr_accessor :style, :font, :xwidth, :ywidth, :pos1, :pos2
 
       tempstyle.color = Color::White
       set_style( tempstyle )
-      device_multiline( vects, true )
+#      device_multiline( vects, true )
       tempstyle.color = style.color
       set_style ( tempstyle )
       device_multiline( vects, false )

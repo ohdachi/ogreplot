@@ -103,7 +103,7 @@ Line = 2
 XError = 4
 YError = 8
 Bar = 16
-STACK = 32
+Contour = 32
 Dummy = 128
 
 #
