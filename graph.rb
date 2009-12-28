@@ -295,8 +295,6 @@ class Graph
       n2 = data.size
       @xarr = (0 .. n1-1).collect{|i| i.to_f} if @xarr == nil
       @yarr = (0 .. n2-1).collect{|i| i.to_f} if @yarr == nil
-      p @xarr, @levels
-
     end
 #
 #   if multi column is specified, we call Plot.new for each combination
@@ -908,8 +906,6 @@ class Graph
       end
       legend.add( legend_proc_arr, @label ) if legend_proc_arr.size != 0 
     end
-
-
     def xerror_plot(dev, dx, dy, ex1, ex2)
       d2 = @xaxis.frac( dy )
       if d2 >= 0.0 && d2 <=1.0 then
