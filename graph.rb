@@ -55,7 +55,7 @@ require 'defs.rb'
 require 'canvas.rb'
 
 class Graph
-  attr_accessor :plot, :axis, :axis1, :axis2
+  attr_accessor :plots, :axis, :axis1, :axis2
   attr_accessor :xaxis, :yaxis, :x2axis, :y2axis
   attr_accessor :x3axis, :y3axis, :x4axis, :y4axis
   attr_accessor :legend, :legend_show, :legend_pos
@@ -490,7 +490,7 @@ class Graph
 =end
 
   class Plot
-    attr_accessor :data, :c1, :c2, :clip, :xarr, :yarr
+    attr_accessor :data, :c1, :c2, :clip, :xarr, :yarr, :linefill, :factor
     @@bs = nil
     def initialize(data, xedata, yedata, c1, c2, cye, xaxis, yaxis, gtype, symbol = nil, factor = 1.0, nbar = nil, label = '', xarr = nil, yarr = nil, levels = nil)
 
@@ -515,6 +515,7 @@ class Graph
       @xarr = xarr
       @yarr = yarr
       @levels = levels
+      @linefill = nil # when the line plot is fill with color it will be style
       @clines = {} # for contour
     end
 
@@ -696,6 +697,7 @@ class Graph
         }
       }
     end
+
     def triangle(p1, p2, p3)
       le = {}
       lines = [ [p1,p2], [p2,p3], [p3,p1] ]
@@ -884,13 +886,18 @@ class Graph
 	lines = data.collect{ |d|
 	  [@xaxis.frac( d[@c1]), @yaxis.frac(d[@c2] )]
 	}
-	unless @clip then 
-	  dev.multiline( lines, @symbol.pstyle.style  )
-	end
+	unless @clip then
+          if @linefill == nil then
+            dev.multiline( lines, @symbol.pstyle.style  )
+          else
+            dev.multiline( lines, @linefill, true)
+          end
+	else
 #
 #       clipping of lines
 #
-        drawline_with_clip(lines, dev)
+          drawline_with_clip(lines, dev)
+        end
 	p = Proc.new{ |dev, x, y, dx, dy|
           dev.line([x - dx / 3.0, y], [x + dx / 3.0, y], @symbol.pstyle.style)
 	}
@@ -1393,9 +1400,7 @@ class Graph
 	vect.push( [v2[0] + uv1[0] * rp[0] + uv2[0] * rp[1], v2[1] + uv1[1] * rp[0] + uv2[1] * rp[1] ] )
       }
       puts "arrow vect\n" if $debug
-
       dev.multiline(vect, astyle.style)
-	
     end
   end
 end

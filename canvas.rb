@@ -78,13 +78,25 @@ attr_accessor :style, :font, :xwidth, :ywidth, :pos1, :pos2
     set_style() unless style == nil
   end
 
-  def multiline(vects, style = nil)
-    set_style(style) unless style == nil
+  def multiline(vects, style = nil, closed = false)
     devicev = vects.collect{ |v|
-       trans(v)
+      trans(v)
     }
-    device_multiline( devicev, false)
-    set_style() unless style == nil
+    if not closed then
+      set_style(style) unless style == nil
+      device_multiline( devicev, false )
+      set_style() unless style == nil
+    else
+      tempstyle = style.dup
+      tempstyle.color = style.background
+      set_style( tempstyle )
+      device_multiline( devicev, true )
+      tempstyle.color = style.color
+      set_style ( tempstyle )
+      device_multiline( devicev, false )
+      set_style()
+    end
+
   end
 
   def putchar(str, v, justification='L', rotation = 0, font=nil)
@@ -158,7 +170,6 @@ attr_accessor :style, :font, :xwidth, :ywidth, :pos1, :pos2
       set_style()
 #      set_style( @style ) 
     else
-
       tempstyle.color = Color::White
       set_style( tempstyle )
 #      device_multiline( vects, true )
