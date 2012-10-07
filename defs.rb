@@ -4,7 +4,7 @@ $Id: defs.rb,v 1.22 2008/11/11 12:38:14 ohdachi Exp $
 =end
 $debug = false
 module Ogre
-
+  
 #
 # Definitions of default style of lines (color, width, dash, background)
 #                default style of fonts (fontname, size)

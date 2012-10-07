@@ -445,10 +445,10 @@ class Graph
          n1 = mat[0].size
          dx = (v2[0]-v1[0]) / n1
          dy = (v2[1]-v1[1]) / n2
-         print "dx = #{dx}, dy = #{dy}"
-         p v1
-         p v2
-         print  "n1 = #{n1}, n2 = #{n2}\n"
+#         print "dx = #{dx}, dy = #{dy}"
+#         p v1
+#         p v2
+#         print  "n1 = #{n1}, n2 = #{n2}\n"
          (0 ... n2).each{|j|
            (0 ... n1).each{|i|
              x1, y1 = @xaxis.frac( v1[0] + dx * i ), @yaxis.frac( v1[1] + dy * j)
@@ -508,7 +508,7 @@ class Graph
       @symbol = symbol
       @factor = factor
       @nbar = nbar
-      
+#      print "#{@factor} "
       @errsize = 0.01
       @clip = true
       @label = label
@@ -616,7 +616,7 @@ class Graph
       return [min, max]
     end
 
-    def drawline_with_clip(lines, dev)
+    def drawline_with_clip(lines, dev, symfactor=nil)
       templine = []
       templine.push( lines[0] ) if bound( lines[0] )
       (0 ... lines.size - 1).each {|i|
@@ -625,7 +625,7 @@ class Graph
           templine.push( lines[i+1] )
         elsif res == 1 then  # only first point is inside
           templine.push( cr[0] )
-          dev.multiline( templine, @symbol.pstyle.style )
+          dev.multiline( templine, @symbol.pstyle.style, false, symfactor )
           templine = []
         elsif res == 2 then  # second point is inside
           templine.push( cr[0] )
@@ -633,7 +633,7 @@ class Graph
         elsif res == 3 then  # only frangment is inside
           templine.push( cr[0] )
           templine.push( cr[1] )
-          dev.multiline( templine, @symbol.pstyle.style )
+          dev.multiline( templine, @symbol.pstyle.style, false, symfactor )
           templine = []
         end
       }
@@ -888,15 +888,15 @@ class Graph
 	}
 	unless @clip then
           if @linefill == nil then
-            dev.multiline( lines, @symbol.pstyle.style  )
+            dev.multiline( lines, @symbol.pstyle.style, false, @factor  )
           else
-            dev.multiline( lines, @linefill, true)
+            dev.multiline( lines, @linefill, true, @factor)
           end
 	else
 #
 #       clipping of lines
 #
-          drawline_with_clip(lines, dev)
+          drawline_with_clip(lines, dev, @factor)
         end
 	p = Proc.new{ |dev, x, y, dx, dy|
           dev.line([x - dx / 3.0, y], [x + dx / 3.0, y], @symbol.pstyle.style)
@@ -931,7 +931,7 @@ class Graph
               dev.multiline( lines, @symbol.pstyle.style  )
             else
 #             @symbol = PlotSymbol.new(Ogre::Std_plotstyle[ip])
-              drawline_with_clip(lines, dev)
+              drawline_with_clip(lines, dev, @factor)
             end
           }
 #          ip = (ip + 1) % 8
@@ -1149,8 +1149,10 @@ class Graph
         end
 
       else
+        ticks_backup = @ticks
+        mticks_backup = @mticks
         #logscale
-
+#        print "#{min} #{max} #{@tick_specify}\n"
         if min <= 0.0 || max <= 0.0 then
           dif = 0.0
         else
@@ -1208,6 +1210,12 @@ class Graph
             set_ticks(vticks)
           }
         end
+      end
+      if @tick_specify
+        @ticks = ticks_backup
+      end
+      if @mtick_specify
+        @mticks = mticks_backup
       end
     end
       # shortcut for calculating frac

@@ -78,10 +78,17 @@ attr_accessor :style, :font, :xwidth, :ywidth, :pos1, :pos2
     set_style() unless style == nil
   end
 
-  def multiline(vects, style = nil, closed = false)
+  def multiline(vects, style = nil, closed = false, factor = nil)
     devicev = vects.collect{ |v|
       trans(v)
     }
+    if style != nil && factor != nil then
+      bwidth = style.width
+      if factor != 1.0 then
+        style.width *= factor
+      end
+    end
+    
     if not closed then
       set_style(style) unless style == nil
       device_multiline( devicev, false )
@@ -96,7 +103,9 @@ attr_accessor :style, :font, :xwidth, :ywidth, :pos1, :pos2
       device_multiline( devicev, false )
       set_style()
     end
-
+    if style != nil && factor != nil then
+      style.width = bwidth
+    end
   end
 
   def putchar(str, v, justification='L', rotation = 0, font=nil)
