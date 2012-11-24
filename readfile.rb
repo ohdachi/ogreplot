@@ -54,7 +54,8 @@ class Readfile
 
     i = 0
     @file.each { | line |
-      if line[0] != @rem then 
+#      print line[0], @rem
+      if line[0, 1] != @rem then 
 	onearray =[]
 	line.scan(/-?\d*\.?\d+(e|E)(\+|\-)?\d+|-?\d*\.\d+|-?\d+\.?/) { |a, b|
 #             match to the pattern   99.9E-33, | .23, | 34.

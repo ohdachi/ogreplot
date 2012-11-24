@@ -1128,6 +1128,8 @@ class Graph
       steps = [1.0, 2.0, 5.0]
       msteps = [10, 2, 5]
       if ! @logscale then
+        ticks_backup = @ticks
+        mticks_backup = @mticks
         #Linear Scale
         step = (max - min) / 5.0
         amin, amax, step, mstep = minmaxdeterm(min, max, step, mstep, steps, msteps)
