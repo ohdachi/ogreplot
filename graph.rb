@@ -600,6 +600,7 @@ class Graph
       p data[0] if $debug
 
       if data.class != Array || data[0].class != Array
+#        p data
         raise 'Data should be 2D array like data[0][1]'
       end
       min = max = data[0][c].to_f
@@ -783,7 +784,7 @@ class Graph
     end
 
     def plot(dev, legend)
-
+#     print "plot-datasize", @data.size, "\n"
 #    miror  withdata range_spesified tick_specified 
 #     nil       y           y               y        go  
 #               y           y               n        use determticks
@@ -847,7 +848,7 @@ class Graph
         }
       end
 #
-#     plot x-errorbars
+#     plot y-errorbars
 #
       if @gtype & Ogre::YError != 0 then
 	ndata = @data.size
@@ -941,25 +942,41 @@ class Graph
       legend.add( legend_proc_arr, @label ) if legend_proc_arr.size != 0 
     end
     def xerror_plot(dev, dx, dy, ex1, ex2)
-      d2 = @xaxis.frac( dy )
+      d2 = @yaxis.frac( dy )
+      e1 = @xaxis.frac( ex1 )
+      e2 = @xaxis.frac( ex2 )
       if d2 >= 0.0 && d2 <=1.0 then
-        dev.line( [ @xaxis.frac( ex1 ), @yaxis.frac( dy ) ], 
-          [ @xaxis.frac( ex2 ), @yaxis.frac( dy ) ] )
-        dev.line( [ @xaxis.frac( ex1 ), @yaxis.frac( dy ) + @errsize ], 
+        if e1 >= 0.0 && e1 <= 1.0 then 
+          dev.line( [ @xaxis.frac( ex1 ), @yaxis.frac( dy ) ], 
+          [ @xaxis.frac( dx ), @yaxis.frac( dy ) ] )
+          dev.line( [ @xaxis.frac( ex1 ), @yaxis.frac( dy ) + @errsize ], 
           [ @xaxis.frac( ex1 ), @yaxis.frac( dy ) - @errsize ] )
-        dev.line( [ @xaxis.frac( ex2 ), @yaxis.frac( dy ) + @errsize ], 
+        end
+        if e2 >= 0.0 && e2 <=1 then 
+          dev.line( [ @xaxis.frac( ex2 ), @yaxis.frac( dy ) ], 
+          [ @xaxis.frac( dx ), @yaxis.frac( dy ) ] )
+          dev.line( [ @xaxis.frac( ex2 ), @yaxis.frac( dy ) + @errsize ], 
           [ @xaxis.frac( ex2 ), @yaxis.frac( dy ) - @errsize ] )
         end
+      end
     end
     def yerror_plot(dev, dx, dy, ey1, ey2)
       d1 = @xaxis.frac( dx )
+      e1 = @yaxis.frac( ey1 )
+      e2 = @yaxis.frac( ey2 )
       if d1 >= 0.0 && d1 <= 1.0 then
-        dev.line( [ @xaxis.frac( dx ), @yaxis.frac( ey1 ) ], 
-          [ @xaxis.frac( dx ), @yaxis.frac( ey2 ) ] )
-        dev.line( [ @xaxis.frac( dx ) + @errsize, @yaxis.frac( ey1 ) ], 
+        if e1 >= 0.0 && e1 <= 1.0 then 
+          dev.line( [ @xaxis.frac( dx ), @yaxis.frac( ey1 ) ], 
+          [ @xaxis.frac( dx ), @yaxis.frac( dy ) ] )
+          dev.line( [ @xaxis.frac( dx ) + @errsize, @yaxis.frac( ey1 ) ], 
           [ @xaxis.frac( dx ) - @errsize, @yaxis.frac( ey1 ) ] )
-        dev.line( [ @xaxis.frac( dx ) + @errsize, @yaxis.frac( ey2 ) ], 
+        end
+        if e2 >= 0.0 && e2 <=1 then 
+          dev.line( [ @xaxis.frac( dx ), @yaxis.frac( ey2 ) ], 
+          [ @xaxis.frac( dx ), @yaxis.frac( dy ) ] )
+          dev.line( [ @xaxis.frac( dx ) + @errsize, @yaxis.frac( ey2 ) ], 
           [ @xaxis.frac( dx ) - @errsize, @yaxis.frac( ey2 ) ] )
+        end
       end
     end
     def bar_plot(dev, x1, y1, x2, y2, style)
