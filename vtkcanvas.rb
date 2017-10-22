@@ -34,6 +34,7 @@ class VTKCanvas < Canvas
     @cdb['24'].each_byte{|c|
       print c, ' '
     }
+    @fp2 = File.open('tmp.txt', 'w')
     super(filename, defaultstyle, defaultfont)
   end
 #
@@ -121,6 +122,7 @@ EOFHEADER
     ans = ['my', x - 0x7E] if x == 0x7E
     ans = ['my', x - 0xA1+1] if x >= 0xA1 && x <= 0xBF
     ans = ['dy', x - 0xC0] if x >= 0xC0 && x <= 0xDF
+    ans = ['end', 0] if x == 0x20
 
     ans
   end
@@ -130,88 +132,104 @@ EOFHEADER
     if str != nil then
     xoff = v[0]
     yoff = v[1]
-    dx = 32
-    scale = 1.0
+
+    delta = 32
+    scale = 0.05
 
     i=0
     str.each_byte{|ii|
-      print 'xoof=', xoff, ' yoff=', yoff, "\n"
-      chno =  ii.to_s(16)
-      print chno
+      print 'xoff=', xoff, ' yoff=', yoff, "\n"
+      chno =  ii.to_s(16).upcase
+      print chno, '-'
+      @fp2.print '(', ii.chr, ')', ii.to_s(16).upcase, '='
       l = @cdb[chno]
       pdraw = false
       x = x0 = 0.0
       y = y0 = 0.0
       block = []
-      xoff += xoff + dx * scale
       if l != nil then
-        print l, ' ', l.size(), ':'
         jj = 0
         l.each_byte{|c|
-        cmd, data = trans_sf(c)
-
-        if cmd == 'mx' then
-          x0 = x = data
-#          print x, ' ', y, ' ', x*scale + xoff, ' ', y*scale+yoff, "\n"
-          @points.push( [x*scale+xoff, y*scale+yoff] )
-          @npoints += 1
-          if pdraw then
-            @blocks.push(block)
-            block = []
+          @fp2.print c, ":"
+          cmd, data = trans_sf(c)
+          @fp2.print cmd, ' ', data, "\n"
+          if cmd == 'mx' then
+            x0 = x = data
+            #          print x, ' ', y, ' ', x*scale + xoff, ' ', y*scale+yoff, "\n"
+            @points.push( [x*scale+xoff, y*scale+yoff] )
+            @npoints += 1
+            if pdraw then
+              @blocks.push(block)
+              block.each{|pp|
+                @fp2.print pp, '[', @points[pp][0], ',', @points[pp][1], ']'
+              }
+              @fp2.print block, "\n"
+              block = []
+            end
+            pdraw = false
           end
-          pdraw = false
-        end
-        if cmd == 'my' then
-          y0 = y = data
-          @points.push( [x*scale+xoff, y*scale+yoff] )
-          @npoints += 1
-          if pdraw then
-            @blocks.push(block)
-            block = []
+          if cmd == 'my' then
+            y0 = y = data
+            @points.push( [x*scale+xoff, y*scale+yoff] )
+            @npoints += 1
+            if pdraw then
+              @blocks.push(block)
+              block.each{|pp|
+                @fp2.print pp, '[', @points[pp][0], ',', @points[pp][1], ']'
+              }
+              @fp2.print block, "\n"
+              block = []
+            end
+            pdraw = false
           end
-          pdraw = false
-        end
-        if cmd == 'nx' then
-          x0 = x = data
-          @points.push( [x*scale+xoff, y*scale+yoff] )
-          block.push( @npoints )
-          @npoints += 1
-        end
-        if cmd == 'dx' then
-          x0 = x
-          x = data
-          @points.push( [x*scale+xoff, y*scale+yoff] )
-          if not pdraw then
-            # block.push(0)
-            block.push(@npoints-1)
+          if cmd == 'nx' then
+            x0 = x = data
+            @points.push( [x*scale+xoff, y*scale+yoff] )
+            block.push( @npoints )
+            @npoints += 1
+            pdraw = true
           end
-          block.push(@npoints)
-          @npoints += 1
-          pdraw = true
-        end
-        if cmd == 'dy' then
-          y0 = y
-          y = data
-          @points.push( [x*scale+xoff, y*scale+yoff] )
-          if not pdraw then
-            # block.push(0)
-            block.push(@npoints-1)
+          if cmd == 'dx' then
+            x0 = x
+            x = data
+            @points.push( [x*scale+xoff, y*scale+yoff] )
+            if not pdraw then
+              # block.push(0)
+              block.push(@npoints-1)
+            end
+            block.push(@npoints)
+            @npoints += 1
+            pdraw = true
           end
-          block.push(@npoints)
-          @npoints += 1
-          pdraw = true
-        end
-        if cmd == 'end' then
-          if pdraw then
-            @blocks.push(block)
+          if cmd == 'dy' then
+            y0 = y
+            y = data
+            @points.push( [x*scale+xoff, y*scale+yoff] )
+            if not pdraw then
+              # block.push(0)
+              block.push(@npoints-1)
+            end
+            block.push(@npoints)
+            @npoints += 1
+            pdraw = true
           end
-        end
-        # print '[', block.size, ']'
-        jj += 1
-      }
-#      print jj, "\n"
-    end
+          if cmd == 'end' then
+            if pdraw then
+              @blocks.push(block)
+              block.each{|pp|
+                @fp2.print pp, '[', @points[pp][0], ',', @points[pp][1], ']'
+              }
+              @fp2.print block, "\n"
+              block = []
+            end
+          end
+          # print '[', block.size, ']'
+          jj += 1
+        }
+        #      print jj, "\n"
+      end
       i += 1
+      xoff += delta * scale
     }
     end
 #    @fp.printf("String [%s] at %f %f with just= %s rot = %f \n", str, v[0], v[1], justification, rotation)
@@ -230,15 +248,19 @@ EOFHEADER
   end
 
   def trans(v)
-    [ @x0 + @xwidth * v[0], @y0  + @ywidth - @ywidth * v[1] ]
+    [ @x0 + @xwidth * v[0], @y0  + @ywidth * v[1] ]
   end
 
   def closer
     @fp.print "POINTS #{@points.size} floats\n"
     #POINTS 66 floats
     @points.each{|x, y|
-      tx, ty = trans([x, y])
-      @fp.print "#{tx} #{ty} #{0}\n"
+#      tx, ty = trans([x, y])
+       tx = @v1[0] * x + @v2[0] * y
+       ty = @v1[1] * x + @v2[1] * y
+       tz = @v1[2] * x + @v2[2] * y
+       tz = 0
+      @fp.print "#{tx} #{ty} #{tz}\n"
     }
     @fp.print "CELLS #{@blocks.size} #{@blocks.flatten.size+@blocks.size}\n"
     @blocks.each{|block|
@@ -259,6 +281,7 @@ EOFHEADER
 #CELL_TYPES 2
 #4 4
     @fp.close
+    @fp2.close
   end
 end
 

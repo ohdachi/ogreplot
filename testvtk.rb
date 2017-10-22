@@ -10,3 +10,6 @@ g = Graph.new(a.zip(b), 0, 1)
 VTKCanvas.new('test.vtk') do |fn|
   g.plot(fn)
 end
+PSCanvas.new('test.ps') do |fn|
+  g.plot(fn)
+end
