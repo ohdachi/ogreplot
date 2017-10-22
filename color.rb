@@ -656,4 +656,7 @@ module Color
   DarkMagenta = [139, 0, 139]
   DarkRed = [139, 0, 0]
   LightGreen = [144, 238, 144]
+  Teal = [0, 128, 128]
+  Lime = [0, 128, 0]
+  Olive = [128, 128, 0]
 end
