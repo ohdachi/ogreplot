@@ -20,21 +20,34 @@ class VTKCanvas < Canvas
     @points = []
     @blocks = []
     @npoints = 0
-    @v1 = [1.0, 0.0, 0.0]
-    @v2 = [0.0, 1.0, 0.0]
+    @v1 = [1.0, 0.0, 0.0] # vector in 3D space for xaxis
+    @v2 = [0.0, 1.0, 0.0] # vector in 3D space for yaxis
+    @origin = [0.0, 0.0, 0.0] # vector in 3D space for left-bottom
+
+    @charsizefactor=1.0
+    
     @pos1_whole, @pos2_whole = pos1.collect{|i| i.to_f}, pos2.collect{|i| i.to_f}
 
-    @cdb = {}
-    File.open('KST32B.txt').each_line{|l|
-      l.chomp!
-      if l[0..1] == '00' then
-        @cdb[ l[2..3] ] = l[5 .. -1]
-      end
-    }
-    @cdb['24'].each_byte{|c|
-      print c, ' '
-    }
-    @fp2 = File.open('tmp.txt', 'w')
+    f = File.open('font.dat')
+    @cdb = Marshal.load(f)
+    f.close
+    
+    if options.kind_of?(Hash) then
+      options.each{|key, value|
+        case key.to_s
+        when 'v1'
+          @v1 = value
+        when 'v2'
+          @v1 = value
+        when 'origin'
+          @origin = value
+        when 'charsizefactor'
+          @charsizefactor = value
+        else
+          raise "Option #{key} => #{value} is not supported\n"
+        end
+      }
+    end
     super(filename, defaultstyle, defaultfont)
   end
 #
@@ -63,7 +76,7 @@ class VTKCanvas < Canvas
   end
 
   def header
-    print @fp
+#    print @fp
     if ! @header_p then  # header is only once for a page in postscript
        @fp.print <<EOFHEADER
 # vtk DataFile Version 2.0
@@ -79,9 +92,9 @@ EOFHEADER
     @style= at
   end
 
-#  def set_color(color=@defaultcolor)
+  def set_color(color=@defaultcolor)
 #    @fp.printf("%f %f %f setrgbcolor\n",  color['red'], color['green'], color['blue'])
-#  end
+  end
 
   def set_font(font=@defaultfont)
 #    @fp.printf("%s findfont %d scalefont setfont\n",font.name, font.size)
@@ -127,112 +140,112 @@ EOFHEADER
     ans
   end
 
+  def trans_c(x, y, xoff, yoff, tmat)
+    #    [x*scale+xoff, y*scale+yoff]
+    [ x * tmat[0][0] + y * tmat[0][1] + xoff, x * tmat[1][0] + y * tmat[1][1] + yoff]
+  end
+  
   def device_putchar(str, v, justification, rotation = 0)
-    print "\n", str, ' ', v, "\n"
     if str != nil then
-    xoff = v[0]
-    yoff = v[1]
+      delta = 32
+      mov0 = @xwidth*0.025*@charsizefactor
 
-    delta = 32
-    scale = 0.05
+      mov = [mov0 * Math::cos(rotation / 180.0 * Math::PI ), mov0 * Math::sin(rotation / 180.0 * Math::PI )]
 
-    i=0
-    str.each_byte{|ii|
-      print 'xoff=', xoff, ' yoff=', yoff, "\n"
-      chno =  ii.to_s(16).upcase
-      print chno, '-'
-      @fp2.print '(', ii.chr, ')', ii.to_s(16).upcase, '='
-      l = @cdb[chno]
-      pdraw = false
-      x = x0 = 0.0
-      y = y0 = 0.0
-      block = []
-      if l != nil then
-        jj = 0
-        l.each_byte{|c|
-          @fp2.print c, ":"
-          cmd, data = trans_sf(c)
-          @fp2.print cmd, ' ', data, "\n"
-          if cmd == 'mx' then
-            x0 = x = data
-            #          print x, ' ', y, ' ', x*scale + xoff, ' ', y*scale+yoff, "\n"
-            @points.push( [x*scale+xoff, y*scale+yoff] )
-            @npoints += 1
-            if pdraw then
-              @blocks.push(block)
-              block.each{|pp|
-                @fp2.print pp, '[', @points[pp][0], ',', @points[pp][1], ']'
-              }
-              @fp2.print block, "\n"
-              block = []
-            end
-            pdraw = false
-          end
-          if cmd == 'my' then
-            y0 = y = data
-            @points.push( [x*scale+xoff, y*scale+yoff] )
-            @npoints += 1
-            if pdraw then
-              @blocks.push(block)
-              block.each{|pp|
-                @fp2.print pp, '[', @points[pp][0], ',', @points[pp][1], ']'
-              }
-              @fp2.print block, "\n"
-              block = []
-            end
-            pdraw = false
-          end
-          if cmd == 'nx' then
-            x0 = x = data
-#            @points.push( [x*scale+xoff, y*scale+yoff] )
-#            block.push( @npoints )
-#            @npoints += 1
-#            pdraw = true
-          end
-          if cmd == 'dx' then
-            x0 = x
-            x = data
-            @points.push( [x*scale+xoff, y*scale+yoff] )
-            if not pdraw then
-              # block.push(0)
-              block.push(@npoints-1)
-            end
-            block.push(@npoints)
-            @npoints += 1
-            pdraw = true
-          end
-          if cmd == 'dy' then
-            y0 = y
-            y = data
-            @points.push( [x*scale+xoff, y*scale+yoff] )
-            if not pdraw then
-              # block.push(0)
-              block.push(@npoints-1)
-            end
-            block.push(@npoints)
-            @npoints += 1
-            pdraw = true
-          end
-          if cmd == 'end' then
-            if pdraw then
-              @blocks.push(block)
-              block.each{|pp|
-                @fp2.print pp, '[', @points[pp][0], ',', @points[pp][1], ']'
-              }
-              @fp2.print block, "\n"
-              block = []
-            end
-          end
-          # print '[', block.size, ']'
-          jj += 1
-        }
-        #      print jj, "\n"
+      scale = mov0/delta
+      tmat = [ [ scale* Math::cos(rotation / 180.0 * Math::PI ), scale * Math::sin(-rotation / 180.0 * Math::PI )], [scale * Math::sin(rotation / 180.0 * Math::PI ), scale * Math::cos(rotation / 180.0 * Math::PI )] ]
+      xoff = v[0] + mov0
+      yoff = v[1] + mov0
+
+      case justification.upcase
+      when 'L'
+      when 'R'
+        xoff -= mov[0] * str.size * 1.0
+        yoff -= mov[1] * str.size * 1.0
+      when 'C'
+        xoff -= mov[0] * str.size * 0.5
+        yoff -= mov[1] * str.size * 0.5
       end
-      i += 1
-      xoff += delta * scale
-    }
+      scale = mov0/32
+      i=0
+      str.each_byte{|ii|
+
+        chno =  ii.to_s(16).upcase
+
+        l = @cdb[chno]
+        pdraw = false
+        x = x0 = 0.0
+        y = y0 = 0.0
+        block = []
+        if l != nil then
+          jj = 0
+          l.each_byte{|c|
+            cmd, data = trans_sf(c)
+            if cmd == 'mx' then
+              x0 = x = data
+              #          print x, ' ', y, ' ', x*scale + xoff, ' ', y*scale+yoff, "\n"
+              @points.push( trans_c(x, y, xoff, yoff, tmat) )
+              @npoints += 1
+              if pdraw then
+                @blocks.push(block)
+                block = []
+              end
+              pdraw = false
+            end
+            if cmd == 'my' then
+              y0 = y = data
+              @points.push( trans_c(x, y, xoff, yoff, tmat) )
+              @npoints += 1
+              if pdraw then
+                @blocks.push(block)
+                block = []
+              end
+              pdraw = false
+            end
+            if cmd == 'nx' then
+              x0 = x = data
+            end
+            if cmd == 'dx' then
+              x0 = x
+              x = data
+              @points.push( trans_c(x, y, xoff, yoff, tmat) )
+              if not pdraw then
+                # block.push(0)
+                block.push(@npoints-1)
+              end
+              block.push(@npoints)
+              @npoints += 1
+              pdraw = true
+            end
+            if cmd == 'dy' then
+              y0 = y
+              y = data
+              @points.push( trans_c(x, y, xoff, yoff, tmat) )
+              if not pdraw then
+                # block.push(0)
+                block.push(@npoints-1)
+              end
+              block.push(@npoints)
+              @npoints += 1
+              pdraw = true
+            end
+            if cmd == 'end' then
+              if pdraw then
+                @blocks.push(block)
+                block = []
+              end
+            end
+            # print '[', block.size, ']'
+            jj += 1
+          }
+          #      print jj, "\n"
+        end
+        i += 1
+        xoff += mov[0]
+        yoff += mov[1]
+      }
     end
-#    @fp.printf("String [%s] at %f %f with just= %s rot = %f \n", str, v[0], v[1], justification, rotation)
+    #    @fp.printf("String [%s] at %f %f with just= %s rot = %f \n", str, v[0], v[1], justification, rotation)
   end
 
   def device_line(v1, v2)
@@ -281,7 +294,6 @@ EOFHEADER
 #CELL_TYPES 2
 #4 4
     @fp.close
-    @fp2.close
   end
 end
 
