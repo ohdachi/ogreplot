@@ -184,10 +184,10 @@ EOFHEADER
           end
           if cmd == 'nx' then
             x0 = x = data
-            @points.push( [x*scale+xoff, y*scale+yoff] )
-            block.push( @npoints )
-            @npoints += 1
-            pdraw = true
+#            @points.push( [x*scale+xoff, y*scale+yoff] )
+#            block.push( @npoints )
+#            @npoints += 1
+#            pdraw = true
           end
           if cmd == 'dx' then
             x0 = x
