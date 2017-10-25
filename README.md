@@ -13,4 +13,6 @@ Mainly used for postscript files for scientific Journals.
       g.plot(ps)
     end
 
-
+*** Acknowledgemtns
+Thank you very much SakaN san for stroke font KST32B http://www.vector.co.jp/soft/data/writing/se119277.html.
+KST32B is used for generating vtk file. 
