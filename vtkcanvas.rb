@@ -5,42 +5,47 @@ class VTKCanvas < Canvas
       *filename 
         name of the file where actions are recorded.
       *options
-      :size => 'A4', :orientation => 'Landscape', :defaultstyle => style, :defaultfont => font
+
 =end
   attr_accessor :style, :font, :xwidth, :ywidth
   attr_accessor :orientation
 
+  attr_accessor :v1, :v2, :charsizefactor, :pos1, :pos2
 #  def initialize(filename='ogre.ps', defaultstyle=Std_style, defaultfont=Std_font, pos1=[72, 72], pos2=[72*6.5, 72*10], options = {} )
   def initialize(filename='ogre.vtk', options = {} )
 
     defaultstyle=Std_style
     defaultfont=Std_font
+
     pos1=[0.0, 0.0]
     pos2=[10*7.5, 10*11.0]
     @points = []
     @blocks = []
     @npoints = 0
-    @v1 = [1.0, 0.0, 0.0] # vector in 3D space for xaxis
-    @v2 = [0.0, 1.0, 0.0] # vector in 3D space for yaxis
-    @origin = [0.0, 0.0, 0.0] # vector in 3D space for left-bottom
+    @v13d = [1.0, 0.0, 0.0] # vector in 3D space for xaxis
+    @v23d = [0.0, 1.0, 0.0] # vector in 3D space for yaxis
+    @origin3d = [0.0, 0.0, 0.0] # vector in 3D space for left-bottom
 
     @charsizefactor=1.0
     
-    @pos1_whole, @pos2_whole = pos1.collect{|i| i.to_f}, pos2.collect{|i| i.to_f}
 
-    f = File.open('font.dat')
+    f = File.open('../ogreplot/font.dat')
     @cdb = Marshal.load(f)
     f.close
     
     if options.kind_of?(Hash) then
       options.each{|key, value|
         case key.to_s
-        when 'v1'
-          @v1 = value
-        when 'v2'
-          @v1 = value
-        when 'origin'
-          @origin = value
+        when 'v13d'
+          @v13d = value
+        when 'v23d'
+          @v13d = value
+        when 'origin3d'
+          @origin3d = value
+        when 'pos1'
+          pos1 = value
+        when 'pos2'
+          pos2 = value
         when 'charsizefactor'
           @charsizefactor = value
         else
@@ -48,6 +53,9 @@ class VTKCanvas < Canvas
         end
       }
     end
+    @pos1_whole, @pos2_whole = pos1.collect{|i| i.to_f}, pos2.collect{|i| i.to_f}
+    setposition(pos1, pos2)
+    defaultfont.size =  @xwidth*0.025*@charsizefactor
     super(filename, defaultstyle, defaultfont)
   end
 #
@@ -154,8 +162,9 @@ EOFHEADER
 
       scale = mov0/delta
       tmat = [ [ scale* Math::cos(rotation / 180.0 * Math::PI ), scale * Math::sin(-rotation / 180.0 * Math::PI )], [scale * Math::sin(rotation / 180.0 * Math::PI ), scale * Math::cos(rotation / 180.0 * Math::PI )] ]
-      xoff = v[0] + mov0
-      yoff = v[1] + mov0
+
+      xoff = v[0]-Math::sin(rotation / 180.0 * Math::PI ) * 0.05 * @charsizefactor
+      yoff = v[1]-Math::cos(rotation / 180.0 * Math::PI ) * 0.05 * @charsizefactor
 
       case justification.upcase
       when 'L'
@@ -183,7 +192,6 @@ EOFHEADER
             cmd, data = trans_sf(c)
             if cmd == 'mx' then
               x0 = x = data
-              #          print x, ' ', y, ' ', x*scale + xoff, ' ', y*scale+yoff, "\n"
               @points.push( trans_c(x, y, xoff, yoff, tmat) )
               @npoints += 1
               if pdraw then
@@ -210,7 +218,6 @@ EOFHEADER
               x = data
               @points.push( trans_c(x, y, xoff, yoff, tmat) )
               if not pdraw then
-                # block.push(0)
                 block.push(@npoints-1)
               end
               block.push(@npoints)
@@ -222,7 +229,6 @@ EOFHEADER
               y = data
               @points.push( trans_c(x, y, xoff, yoff, tmat) )
               if not pdraw then
-                # block.push(0)
                 block.push(@npoints-1)
               end
               block.push(@npoints)
@@ -235,21 +241,19 @@ EOFHEADER
                 block = []
               end
             end
-            # print '[', block.size, ']'
             jj += 1
           }
-          #      print jj, "\n"
         end
         i += 1
         xoff += mov[0]
         yoff += mov[1]
       }
     end
-    #    @fp.printf("String [%s] at %f %f with just= %s rot = %f \n", str, v[0], v[1], justification, rotation)
+
   end
 
   def device_line(v1, v2)
-    #    @fp.printf("%f %f moveto %f %f lineto stroke \n",  v1[0], v1[1], v2[0], v2[1])
+
     @points.push([v1[0], v1[1]])
     @points.push([v2[0], v2[1]])
     @blocks.push([@npoints, @npoints+1])
@@ -268,10 +272,10 @@ EOFHEADER
     @fp.print "POINTS #{@points.size} floats\n"
     #POINTS 66 floats
     @points.each{|x, y|
-#      tx, ty = trans([x, y])
-       tx = @v1[0] * x + @v2[0] * y
-       ty = @v1[1] * x + @v2[1] * y
-       tz = @v1[2] * x + @v2[2] * y
+
+       tx = @v13d[0] * x + @v23d[0] * y + @origin3d[0]
+       ty = @v13d[1] * x + @v23d[1] * y + @origin3d[1]
+       tz = @v13d[2] * x + @v23d[2] * y + @origin3d[2]
        tz = 0
       @fp.print "#{tx} #{ty} #{tz}\n"
     }
@@ -294,6 +298,7 @@ EOFHEADER
 #CELL_TYPES 2
 #4 4
     @fp.close
+    print  @x0, ' ', @xwidth, ' ',  @y0, ' ',@ywidth, "\n"
   end
 end
 

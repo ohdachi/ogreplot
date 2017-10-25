@@ -12,3 +12,5 @@ Mainly used for postscript files for scientific Journals.
       ps.setpart([0.1, 0.1], [0.9, 0.5])
       g.plot(ps)
     end
+
+

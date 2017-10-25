@@ -1270,9 +1270,11 @@ class Graph
 
       pticks.each_with_index { |p, i|
 	if ticks[i][0] >= @min and ticks[i][0] <= @max
-	  x = @origin[0] + p * @vect[0]
-	  y = @origin[1] + p * @vect[1]
-#          print "x = #{x}, y = #{y}\n"
+#	  x = @origin[0] + p * @vect[0]
+#	  y = @origin[1] + p * @vect[1]
+	  x = p * @vect[0]
+	  y = p * @vect[1]
+          #          print "x = #{x}, y = #{y}\n"
           dev.line( [x, y], 
 		   [x +  @ticklen * @tickvect[0] , y + @ticklen * @tickvect[1]]) 
 
@@ -1287,7 +1289,7 @@ class Graph
 #        p @mticks
 	pmticks = @mticks.collect{ |v| frac(v) }
 	pmticks.each_with_index { |p, j|
-	  if @mticks[j] > @min && @mticks[j] < @max then 
+	  if @mticks[j] > @min && @mticks[j] < @max then  
 	    x = @origin[0] + p * @vect[0]
 	    y = @origin[1] + p * @vect[1]
 	    dev.line( [x, y], 
@@ -1297,6 +1299,7 @@ class Graph
       end
 
       if @title_show then
+#        p 'titlepos', @titlepos
 	@text.push( Text.new(@title, @titlepos, 'c', [0,0] ,@titleangle) )
       end
 
