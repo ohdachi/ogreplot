@@ -3,13 +3,13 @@ ruby library for scientific plotting. (OGRE:Object-oriented Graph plotting libra
 In this library, each graph is represented as ruby object. Control of the elements of graph, such as axis, ticks are easily controlled.
 Mainly used for postscript files for scientific Journals. 
 
-= ogre: 
-== Object oriented Graph plot program on Ruby environment
-=== Programed by Satoshi Ohdachi ( Ohdachi@nifs.ac.jp )
-===    ver 0.01 Dec. 2000
-===    ver 0.1 Aug. 2007
-===    ver 1.0 Jun. 2009 registered to Google Code
-===    2012 moveto Github since Google Code is closed.
+# ogre: 
+## Object oriented Graph plot program on Ruby environment
+### Programed by Satoshi Ohdachi ( Ohdachi@nifs.ac.jp )
+###    ver 0.01 Dec. 2000
+###    ver 0.1 Aug. 2007
+###    ver 1.0 Jun. 2009 registered to Google Code
+###    2012 moveto Github since Google Code is closed.
 
 #sample
     requre 'ogreplot/graph'
