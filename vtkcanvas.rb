@@ -19,17 +19,18 @@ class VTKCanvas < Canvas
 
     pos1=[0.0, 0.0]
     pos2=[10*7.5, 10*11.0]
-    @points = []
-    @blocks = []
-    @npoints = 0
+    @points = [] # container for gnerationg vtk file
+    @blocks = [] # container for vtk objects
+    @npoints = 0 # pointer of the last points
+    
     @v13d = [1.0, 0.0, 0.0] # vector in 3D space for xaxis
-    @v23d = [0.0, 1.0, 0.0] # vector in 3D space for yaxis
+    @v23d = [0.0, 0.0, 1.0] # vector in 3D space for yaxis
     @origin3d = [0.0, 0.0, 0.0] # vector in 3D space for left-bottom
 
     @charsizefactor=1.0
-    
 
-    f = File.open('../ogreplot/font.dat')
+    dir = File.expand_path(File.dirname(__FILE__))
+    f = File.open(dir +'/font.dat')
     @cdb = Marshal.load(f)
     f.close
     
@@ -39,7 +40,7 @@ class VTKCanvas < Canvas
         when 'v13d'
           @v13d = value
         when 'v23d'
-          @v13d = value
+          @v23d = value
         when 'origin3d'
           @origin3d = value
         when 'pos1'
@@ -55,7 +56,8 @@ class VTKCanvas < Canvas
     end
     @pos1_whole, @pos2_whole = pos1.collect{|i| i.to_f}, pos2.collect{|i| i.to_f}
     setposition(pos1, pos2)
-    defaultfont.size =  @xwidth*0.025*@charsizefactor
+#    defaultfont =  ['BTS32B', @xwidth*0.025*@charsizefactor]
+    defaultfont =  Font.new('BTS32B', 0)
     super(filename, defaultstyle, defaultfont)
   end
 #
@@ -272,11 +274,10 @@ EOFHEADER
     @fp.print "POINTS #{@points.size} floats\n"
     #POINTS 66 floats
     @points.each{|x, y|
-
        tx = @v13d[0] * x + @v23d[0] * y + @origin3d[0]
        ty = @v13d[1] * x + @v23d[1] * y + @origin3d[1]
        tz = @v13d[2] * x + @v23d[2] * y + @origin3d[2]
-       tz = 0
+
       @fp.print "#{tx} #{ty} #{tz}\n"
     }
     @fp.print "CELLS #{@blocks.size} #{@blocks.flatten.size+@blocks.size}\n"
@@ -298,7 +299,7 @@ EOFHEADER
 #CELL_TYPES 2
 #4 4
     @fp.close
-    print  @x0, ' ', @xwidth, ' ',  @y0, ' ',@ywidth, "\n"
+#    print  @x0, ' ', @xwidth, ' ',  @y0, ' ',@ywidth, "\n"
   end
 end
 
