@@ -12,6 +12,7 @@ Mainly used for postscript files for scientific Journals.
 ###    2012 moveto Github since Google Code is closed.
 
 #sample
+```sample.rb
     requre 'ogreplot/graph'
     g = Graph.new(prof1, 0, [1, 2], :gtype => Ogre::Scatter|Ogre::YError, :xrange => xrange, :yrange => [0, yrange[0]], :label => "#{sn1} (#{nt1/1000}s)")
     g.xaxis.title = "R [m]"
@@ -20,7 +21,8 @@ Mainly used for postscript files for scientific Journals.
       ps.setpart([0.1, 0.1], [0.9, 0.5])
       g.plot(ps)
     end
+```
 
-*** Acknowledgemtns
+### Acknowledgemtns
 Thank you very much SakaN san for stroke font KST32B http://www.vector.co.jp/soft/data/writing/se119277.html.
 KST32B is used for generating vtk file. 
